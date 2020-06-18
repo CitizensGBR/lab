@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Great Reef Census: Reefs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+  <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+</head>
+<body>
+<div class="map">
+  <div id="map" width="100%" height="100%"></div>
+  <aside class="meta">
+    <h1 class="meta-depth"></h1>
+  </aside>
+  <aside class="filter">
+    <div class="search">
+      <input class="search-input" placeholder="Search for a reef or island">
+      <ul class="search-results"></ul>
+    </div>
+  </aside>
+</div>
+<script>
+const $el = {
+  search: document.querySelector('.search-input'),
+  searchResults: document.querySelector('.search-results'),
+  depth: document.querySelector('.meta-depth'),
+};
+const props = {
+  mapbox: {
+    layer: {
+      features: 'gbr-features-all-data-limited-b7sjza',
+      elevation: 'gbr-elevation-step5m-max100m-abgome',
+    },
+    style: 'mapbox://styles/citizensgbr/ckbfua7qs392g1inrykf56d9m',
+    token: 'pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog',
+  },
+};
+const fn = {
+  data: {},
+  init() {
+    $el.search.addEventListener('input', this.onSearch);
+    $el.searchResults.addEventListener('click', this.onSearchResult);
+
+    fetch('GBR-Features-points.pbf')
+    .then(e => e.arrayBuffer())
+    .then(this.onFeaturesData);
+
+    mapboxgl.accessToken = props.mapbox.token;
+    const map = props.map = new mapboxgl.Map({
+      container: 'map',
+      style: props.mapbox.style, // stylesheet location
+      center: [146, -16.77], // starting position [lng, lat]
+      zoom: 6, // starting zoom
+      attributionControl: false,
+    })
+    .addControl(new mapboxgl.AttributionControl({
+      customAttribution: '<a href="https://www.deepreef.org/bathymetry/65-3dgbr-bathy.html" title="Bathymetry data © www.deepreef.org 2017 (CC BY 4.0)">© www.deepreef.org</a> <a href="https://eatlas.org.au/data/uuid/ac8e8e4f-fc0e-4a01-9c3d-f27e4a8fac3c" title="GBR Features © GBRMPA 2014 (CC BY 4.0)">© GBRMPA</a> <a href="https://citizensgbr.org" title="Map and data modifications © CitizensGBR 2020 (CC BY 4.0)">© CitizensGBR</a> <a href="https://creativecommons.org/licenses/by/4.0/" title="Creative Commons Attribution 4.0 International"><strong>(CC BY 4.0)</strong></a>',
+    }));
+    map.once('render', map.resize);
+    map.once('load', this.onLoad);
+    map.on('click', props.mapbox.layer.features, this.onFeatureSelect);
+    // map.on('mouseover', props.mapbox.layer.features, this.onFeatureSelect);
+    map.on('mousemove', props.mapbox.layer.elevation, this.onDepth);
+    map.on('mouseout', props.mapbox.layer.elevation, () => this.onDepth());
+  },
+  onFeatureSelect(e) {
+    const feature = props.features.find(feature => feature.properties.id === e.features[0].properties.id);
+    fn.toggleFeature(feature);
+  },
+  onDepth(e) {
+    const depth = e && e.features[0].properties.elevation * -1;
+    $el.depth.innerHTML = isNaN(depth) ? '' : (depth === 100 && '>100') || depth;
+  },
+  onFeaturesData(data) {
+    props.features = geobuf.decode(new Pbf(data)).features;
+    props.features.forEach((feature, index) => {
+      feature.properties.search = [feature.properties.name, feature.properties.id].filter(v => v).join(' ');
+      const lat = feature.geometry.coordinates[1];
+      feature.properties.sector = (lat < -14.9 && 'Central') || (lat < -20.5 && 'Southern') || 'Northern';
+      feature.properties.index = index;
+    });
+    fn.onSearch();
+  },
+  onLoad() {
+    props.map.easeTo({
+      zoom: 10,
+      bearing: 0,
+      pitch: 40,
+      duration: 2000,
+      center: [146.265366, -16.778374] // Milln Reef,
+    });
+    // props.features = new Map();
+    // this.queryRenderedFeatures({ layers: [props.mapbox.layerID] }).forEach(feature => props.features.set(feature.id, feature.properties));
+    // fn.onSearch();
+  },
+  onSearch() {
+    if (!props.features) return;
+    const query = $el.search.value;
+    
+    if (!query) {
+      $el.searchResults.innerHTML = '';
+    }
+
+    $el.searchResults.innerHTML = props.features.reduce((_, feature) => {
+      let searchScore = fn.util.search.score(feature.properties.search, query, true);
+      if (searchScore === 0) return _;
+      return _.concat({ properties: feature.properties, searchScore });
+    }, [])
+    .sort((a, b) => b.searchScore - a.searchScore || b.search - a.search)
+    .reduce((_, feature) =>
+      _.concat(`<li class="meta-item" data-index="${feature.properties.index}">
+        <strong>${feature.properties.name || feature.properties.id}</strong>
+        <small>${feature.properties.type || ''}, ${feature.properties.sector} GBR</small>
+      </li>`), '');
+  },
+  onSearchResult(e) {
+    const $li = e.target.closest('li');
+    if (!$li) return;
+
+    const feature = props.features[+$li.dataset.index];
+
+    props.map.easeTo({
+      zoom: 10,
+      bearing: 0,
+      pitch: 40,
+      duration: 2000,
+      center: feature.geometry.coordinates,
+    });
+
+    fn.toggleFeature(feature);
+  },
+  toggleFeature(feature) {
+    if (props.popup && props.popup.isOpen()) props.popup.remove();
+    if (!feature) return;
+
+    if (props.popup) {
+      props.popup.setLngLat(feature.geometry.coordinates);
+    } else {
+      props.popup = new mapboxgl.Popup({
+        anchor: 'bottom',
+        // closeButton: false,
+        closeOnClick: false,
+      })
+      .setLngLat(feature.geometry.coordinates);
+    }
+
+    const area = (feature.properties.km2 < 1 && feature.properties.km2.toFixed(2))
+      || (feature.properties.km2 < 10 && feature.properties.km2.toFixed(1))
+      || Math.round(feature.properties.km2);
+
+    props.popup.setHTML(`<div class="meta-item">
+      <strong>${feature.properties.name || feature.properties.id}</strong>
+      <small>${feature.properties.type || ''}, ${+area}km<sup>2</sup><br>
+      ${feature.properties.sector} GBR</small>
+    </div>`)
+    .addTo(props.map);
+  },
+  util: {
+    search: {
+      query(str, query, score) {
+        const index = str === query ? 0
+        : (!query || !str) && -1
+          || str.toLowerCase().indexOf(query.toLowerCase());
+        return score
+        ? (index < 0
+          ? 0
+          : (str.length - index + query.length) / (2 * str.length))
+        : index; 
+      },
+      score(str, query, hasAllWords) {
+        const strLower = str.toLowerCase();
+        const strWords = strLower.split(/\W+/);
+        const queryLower = query.toLowerCase();
+        const queryWords = queryLower.split(/\W+/);
+
+        return fn.util.search.query(str, query, true) +
+        queryWords.reduce((total, queryWord, i) => {
+          // exclude previously non-matching queries
+          if (hasAllWords && i && !total) return 0;
+          // score the query word against the string
+          const wordScore = strWords.reduce((subtotal, strWord, ii) => {
+            return subtotal || fn.util.search.query(strWord, queryWord, true) / (ii + 1);
+          }, 0) / (i + 1);
+          // exlude non-matching queries if all words are required
+          return hasAllWords && i && !wordScore
+          ? 0
+          // otherwise sum scores
+          : total + wordScore;
+        }, 0);
+      },
+    }
+  },
+};
+
+fn.init();
+</script>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: sans-serif;
+  font-weight: 300;
+}
+.map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
+.filter {
+  position:  absolute;
+  left: 0;
+  top: 0;
+  margin: 1em;
+}
+.search-input {
+  padding: 0.6em 0.4em;
+  width: 15em;
+  border: none;
+  font-size: 1.2em;
+  box-shadow: 0 0.1em 0.1em rgba(0,0,0,0.1);
+}
+.search-results {
+  font-size:  0.8em;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 10em;
+  overflow:  auto;
+}
+.search-results:empty {
+  display: none;
+}
+.search-results li {
+  background: #fff;
+  padding:  0.6em;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+.search-results li:hover {
+  text-decoration: underline;
+}
+.meta-item {
+  line-height: 1em;
+}
+.meta-item strong {
+  display: block;
+  margin-bottom: 0.2em;
+}
+.mapboxgl-popup-content .meta-item {
+  text-align: center;
+  margin-top:  0.4em;
+}
+.meta {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 1em;
+}
+@media (max-width: 37.5rem) {
+  .meta {
+    top: auto;
+    bottom: 2em;
+  }
+}
+.meta-depth {
+  font-weight: 300;
+  margin: 0;
+  min-width: 1.7em;
+  padding-right: 0.9em;
+  text-align: right;
+}
+.meta-depth:empty {
+  display: none;
+}
+.meta-depth::before {
+  content: 'Depth:';
+  position: absolute;
+  transform: translateX(-100%);
+  left: 0;
+}
+.meta-depth::after {
+  content: 'm';
+  position: absolute;
+  right: 0;
+}
+.mapboxgl-marker svg > g > g:first-child {
+  opacity: 0.4;
+}
+</style>
+</body>
