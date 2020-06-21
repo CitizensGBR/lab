@@ -32,7 +32,7 @@ const props = {
   mapbox: {
     layer: {
       features: 'gbr-features-all-data-limited-b7sjza',
-      elevation: 'gbr-elevation-step5m-max100m-abgome',
+      elevation: 'gbr100-elevation-5m100-20m200-107o5v',
     },
     style: 'mapbox://styles/citizensgbr/ckbfua7qs392g1inrykf56d9m',
     token: 'pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog',
@@ -61,18 +61,53 @@ const fn = {
     }));
     map.once('render', map.resize);
     map.once('load', this.onLoad);
-    map.on('click', props.mapbox.layer.features, this.onFeatureSelect);
-    // map.on('mouseover', props.mapbox.layer.features, this.onFeatureSelect);
-    map.on('mousemove', props.mapbox.layer.elevation, this.onDepth);
-    map.on('mouseout', props.mapbox.layer.elevation, () => this.onDepth());
+    map.on('mouseenter', props.mapbox.layer.elevation, () => {
+      map.getCanvas().style.cursor = 'crosshair';
+      map.on('mousemove', props.mapbox.layer.elevation, fn.onMove);
+    });
+    map.on('mouseleave', props.mapbox.layer.elevation, () => {
+      map.getCanvas().style.cursor = '';
+      map.off('mousemove', props.mapbox.layer.elevation, fn.onMove);
+      fn.onMove();
+    });
+  },
+  onMove(e) {
+    if (!e) {
+      if (props.popup && props.popup.isOpen()) props.popup.remove();
+      return;
+    }
+
+    const feature = e.features[0];
+    const depth = feature.properties.z * -1;
+
+    if (!props.popup) {
+      props.popup = new mapboxgl.Popup({
+        anchor: 'bottom',
+        closeButton: false,
+        closeOnClick: false,
+      });
+    }
+      
+    props.popup.setLngLat(e.lngLat);
+    if (!props.popup.isOpen()) {
+      props.popup.addTo(props.map);
+    }
+
+    props.popup.setHTML(`<div class="meta-item">
+      <strong>Depth ${depth}m</strong>
+      <small>${e.lngLat.lng.toFixed(3)}, ${e.lngLat.lat.toFixed(3)}</small>
+    </div>`)
+    ;
   },
   onFeatureSelect(e) {
     const feature = props.features.find(feature => feature.properties.id === e.features[0].properties.id);
     fn.toggleFeature(feature);
   },
   onDepth(e) {
-    const depth = e && e.features[0].properties.elevation * -1;
+    const depth = e && e.features[0].properties.z * -1;
     $el.depth.innerHTML = isNaN(depth) ? '' : (depth === 100 && '>100') || depth;
+
+
   },
   onFeaturesData(data) {
     props.features = geobuf.decode(new Pbf(data)).features;
@@ -255,6 +290,9 @@ html, body {
 .meta-item strong {
   display: block;
   margin-bottom: 0.2em;
+}
+.mapboxgl-popup-content {
+  pointer-events: none;
 }
 .mapboxgl-popup-content .meta-item {
   text-align: center;
