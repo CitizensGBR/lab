@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Great Reef Census: Reefs Tiles</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.js"></script>
+  <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
+  <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+</head>
+<body>
+<div class="map">
+  <div id="map" width="100%" height="100%"></div>
+</div>
+<div class="terrain"></div>
+<div class="controls">
+  <img src class="controls-img" crossorigin="anonymous">
+  <button class="controls-render">Render</button>
+</div>
+<script type="module">
+
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/controls/OrbitControls.js';
+import Martini from 'https://cdn.jsdelivr.net/gh/mapbox/martini@0.2.0/index.js';
+console.log(THREE, Martini);
+
+// https://api.mapbox.com/v4/citizensgbr.9mxdp93s/10/929/562.webp?sku=101CCseLIySMe&access_token=pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true
+
+// https://api.mapbox.com/v4/citizensgbr.9mxdp93s/9/467/278.webp?sku=101T3i3JxVVY7&access_token=pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true
+
+// https://api.mapbox.com/v4/citizensgbr.9mxdp93s/11/1831/1081.png?access_token=pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog
+
+// https://api.mapbox.com/v4/citizensgbr.9mxdp93s/11/1831/1081.png?access_token=pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true
+
+
+// https://api.mapbox.com/v4/citizensgbr.9mxdp93s/11/1831/1081.webp?sku=1010TXPsSjhNq&access_token=pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true
+
+// 11/1831/1081 -> corner
+
+const $el = {
+  terrain: document.querySelector('.terrain'),
+  controls: {
+    render: document.querySelector('.controls-render'),
+    img: document.querySelector('.controls-img'),
+  },
+};
+
+const props = {
+  mapbox: {
+    layer: {
+      features: 'gbr-features-all-data-limited-b7sjza',
+      elevation: 'citizensgbr-9mxdp93s',
+    },
+    style: 'mapbox://styles/citizensgbr/ckbndm8112acp1inwzltj847o',
+    token: 'pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true',
+  },
+};
+const fn = {
+  init() {
+    $el.controls.render.addEventListener('click', this.renderTerrain);
+
+    mapboxgl.accessToken = props.mapbox.token;
+    const map = props.map = new mapboxgl.Map({
+      container: 'map',
+      style: props.mapbox.style, // stylesheet location
+      center: [146, -16.77], // starting position [lng, lat]
+      zoom: 6, // starting zoom
+      attributionControl: false,
+    })
+    .addControl(new mapboxgl.AttributionControl({
+      customAttribution: '<a href="https://www.deepreef.org/bathymetry/65-3dgbr-bathy.html" title="Bathymetry data © www.deepreef.org 2017 (CC BY 4.0)">© www.deepreef.org</a> <a href="https://eatlas.org.au/data/uuid/ac8e8e4f-fc0e-4a01-9c3d-f27e4a8fac3c" title="GBR Features © GBRMPA 2014 (CC BY 4.0)">© GBRMPA</a> <a href="https://citizensgbr.org" title="Map and data modifications © CitizensGBR 2020 (CC BY 4.0)">© CitizensGBR</a> <a href="https://creativecommons.org/licenses/by/4.0/" title="Creative Commons Attribution 4.0 International"><strong>(CC BY 4.0)</strong></a>',
+    }));
+
+    map.once('render', map.resize);
+    map.once('load', this.onLoad);
+    map.on('move', this.onMove);
+    map.on('click', this.onClick);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
+    camera.position.set(300, 0, 300);
+    camera.up.set(0, 0, 1);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x333333);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const controls = new OrbitControls(camera, renderer.domElement);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    props.three = {
+      camera,
+      scene,
+      renderer,
+      controls,
+    };
+
+    controls.addEventListener('change', fn.renderScene);
+    window.addEventListener('resize', fn.onResize, false);
+    $el.terrain.appendChild(props.three.renderer.domElement);
+    fn.onResize();
+
+    $el.controls.img.src = `https://a.tiles.mapbox.com/v4/mapbox.terrain-rgb/10/906/404.png?access_token=${props.mapbox.token}`;
+    $el.controls.img.addEventListener('load', this.renderTerrain, false);
+  },
+  onResize() {
+    // props.three.camera.aspect = window.innerWidth / window.innerHeight;
+    // props.three.camera.updateProjectionMatrix();
+    const dim = window.innerWidth / 4;
+    props.three.renderer.setSize(dim, dim);
+    fn.renderScene();
+  },
+  animateScene(cancel) {
+    cancelAnimationFrame(props.three.animationFrame);
+    if (cancel === true) return;
+    fn.renderScene();
+    props.three.animationFrame = requestAnimationFrame(fn.animateScene);
+  },
+  renderScene() {
+    props.three.renderer.render(props.three.scene, props.three.camera);
+  },
+  renderTerrain(tile) {
+    const canvas = document.createElement('canvas');
+    canvas.width = $el.controls.img.naturalWidth;
+    canvas.height = $el.controls.img.naturalHeight;
+    console.log(canvas.width, canvas.height)
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage($el.controls.img, 0, 0);
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const tileSize = 256;
+    const gridSize = 257;
+    
+    const terrain = new Float32Array(gridSize * gridSize);
+  
+    // decode terrain values
+    let max = 0;
+    const isCoralReef = /blob|citizens/.test($el.controls.img.src);
+    console.log($el.controls.img.src);
+    for (let y = 0; y <= tileSize; y++) {
+      for (let x = 0; x <= tileSize; x++) {
+        // terrain[y * gridSize + x] = pixels[y * tileSize + x];
+        const i = (y * tileSize + x) * 4;
+        if (x === tileSize || y === tileSize) terrain[y * gridSize + x] = 0;
+        else if (isCoralReef) {
+          terrain[y * gridSize + x] = fn.util.uint8ToElevation(pixels[(x * tileSize + y) * 4], true) * 10;
+          // terrain[y * gridSize + x] = pixels[(x * tileSize + y) * 4] * 10;
+          if (isNaN(terrain[y * gridSize + x])) {
+            console.log(i, fn.util.uint8ToElevation(pixels[(x * tileSize + y) * 4], true))
+            break;
+          }
+          // terrain[y * gridSize + x] = (pixels[y * tileSize + x] / 256) ** 0.5 * 3000;
+        } else {
+          const r = pixels[i + 0];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+          terrain[y * gridSize + x] =
+            (r * 256 * 256 + g * 256.0 + b) / 10.0 - 10000.0;
+        }
+        max = Math.max(max, terrain[y * gridSize + x]);
+      }
+    }
+    console.log({ max });
+
+    // // backfill right and bottom borders
+    // for (let x = 0; x < gridSize - 1; x++) {
+    //   terrain[gridSize * (gridSize - 1) + x] = terrain[gridSize * (gridSize - 2) + x];
+    // }
+    // for (let y = 0; y < gridSize; y++) {
+    //   terrain[gridSize * y + gridSize - 1] = terrain[gridSize * y + gridSize - 2];
+    // }
+    
+
+
+    // const terrain = new Float32Array(size);
+    // // const z = fn.util.uint8ToElevation(pixels[0]);
+    // // console.log(pixels[0], z);
+    // // // Loop over each pixel and invert the color.
+    // for (let i = 0; i < size; i++) {
+    //   const x = i % (gridSize);
+    //   const y = Math.floor(i / (gridSize));
+    //   if (x === tileSize || y === tileSize) {
+    //     terrain[i] = 0;  
+    //   } else {
+    //     terrain[i] = fn.util.uint8ToElevation(pixels[y * tileSize + x], true);
+    //     if (!x) console.log(y, pixels[y * tileSize + x], terrain[i]);
+    //   }
+    // }
+
+    // set up mesh generator for a certain 2^k+1 grid size
+    const martini = new Martini(gridSize);
+
+    // generate RTIN hierarchy from terrain data (an array of size^2 length)
+    // const tile3d = martini.createTile(terrain);
+    // const tileMesh = tile3d.getMesh(10);
+
+    // const geometry = new THREE.BufferGeometry();
+
+    // const vertices = new Float32Array(tileMesh.vertices.length / 2 * 3);
+
+    // for (let i=0, j=0; i<tileMesh.vertices.length / 2; i++) {
+    //   const x = tileMesh.vertices[i * 2];
+    //   const y = tileMesh.vertices[i * 2 + 1];
+    //   vertices[i * 3 + 0] = x;
+    //   vertices[i * 3 + 2] = terrain[i];
+    //   vertices[i * 3 + 1] = y;
+    // }
+
+    // for (let i = 0; i < tileMesh.vertices.length / 2; i++) {
+    //   let x = tileMesh.vertices[i * 2],
+    //     y = tileMesh.vertices[i * 2 + 1];
+    //   vertices[i * 3 + 0] = x;
+    //   vertices[i * 3 + 1] = y;
+    //   vertices[i * 3 + 2] = terrain[y * 257 + x] / 100;
+    //   // this.vertices.push(x);
+    //   // this.vertices.push(terrain[y * 257 + x] / 100);
+    //   // this.vertices.push(y);
+    // }
+
+    // console.log(tileMesh.vertices.length / 2);
+
+    // const errorCount = [];
+    // for (let y = 0; y <= tileSize; y++) {
+    //   for (let x = 0; x <= tileSize; x++) {
+    //     const i = y * gridSize + x;
+    //     vertices[3 * i + 0] = tileMesh.vertices[2 * i + 0];
+    //     vertices[3 * i + 1] = tileMesh.vertices[2 * i + 1];
+    //     vertices[3 * i + 2] = terrain[i] / tileSize;
+
+    //     for (let ii = 0; ii < 3; ii++) {
+    //       if (isNaN(vertices[3 * i + ii])) {
+    //         errorCount.push([i, ii, terrain[i]]);
+    //       }
+    //     }
+
+    //     // // indices[index++] = i + 1;
+    //     // // indices[index++] = i;
+    //     // // indices[index++] = i + gridSize;
+    //     // // indices[index++] = i + 1;
+    //     // // indices[index++] = i + gridSize;
+    //     // // indices[index++] = i + gridSize + 1;
+    //   }
+    // }
+    // console.log(errorCount[0], errorCount.length);
+    // throw new Error();
+
+    var meshMartini = new Martini(gridSize).createTile(terrain).getMesh(10);
+    var martiniGeo = new THREE.BufferGeometry();
+    const vertices = [];
+    for (let i = 0; i < meshMartini.vertices.length / 2; i++) {
+      let x = meshMartini.vertices[i * 2],
+        y = meshMartini.vertices[i * 2 + 1];
+      vertices.push(x);
+      vertices.push(y);
+      vertices.push(terrain[y * 257 + x] / 100);
+    }
+    let terrainMaterial = new THREE.MeshNormalMaterial({ flatShading: true, side: THREE.DoubleSide });
+    terrainMaterial.needsUpdate = true;
+
+    martiniGeo.setIndex(new THREE.BufferAttribute(meshMartini.triangles, 1));
+    martiniGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(vertices), 3)
+    );
+    martiniGeo.attributes.position.needsUpdate = true;
+    martiniGeo.computeVertexNormals();
+    martiniGeo.computeBoundingBox();
+    martiniGeo.normalizeNormals();
+
+    if (props.three.mesh) props.three.scene.remove(props.three.mesh);
+    const mesh = props.three.mesh = new THREE.Mesh(martiniGeo, terrainMaterial);
+    mesh.position.set(-128, -128, 0);
+    mesh.matrixAutoUpdate = true;
+    
+    // geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    // geometry.setIndex(new THREE.BufferAttribute(tileMesh.triangles, 1));
+    // geometry.computeVertexNormals();
+    // geometry.rotateX(-Math.PI / 2);
+
+    // const material = new THREE.MeshNormalMaterial({ flatShading: true, side: THREE.DoubleSide });
+    // const mesh = new THREE.Mesh(geometry, material);
+    // mesh.matrixAutoUpdate = true;
+    // mesh.name = 'terrain';
+
+    // if (props.three.mesh) props.three.scene.remove(props.three.mesh);
+    // props.three.mesh = mesh;
+    // props.three.scene.add(mesh);
+    // fn.animateScene();
+    // this.ground.setObject3D("mesh", mesh);
+    // this.ground.matrixAutoUpdate = true;
+    props.three.scene.add(mesh);
+    props.three.camera.lookAt(mesh);
+    props.three.controls.update();
+    fn.renderScene();
+  },
+  onMove() {
+    const zoom = props.map.getZoom();
+    const center = props.map.getCenter();
+    const tile = fn.util.lngLatZoomToTile({ zoom, ...center });
+    console.log(center, tile, fn.util.tileToLngLatZoom(tile));
+  },
+  onClick(e) {
+    if (!fn.util.lngLatInBounds(e.lngLat)) return;
+    const { lng, lat } = e.lngLat;
+    const zoom = 11;
+    const tile = fn.util.lngLatZoomToTile({ zoom, lng, lat });
+    fn.util.tileFromCache(tile)
+    .then((url) => $el.controls.img.src = url)
+  },
+  onLoad() {
+    const layer = props.map.getLayer(props.mapbox.layer.elevation);
+    console.log(layer);
+    const elevation = props.map.getSource(layer.source);
+    elevation.simpleId = elevation.id.replace('mapbox://', '');
+    props.mapbox.source = { elevation };
+    
+    props.map.easeTo({
+      zoom: 10,
+      bearing: 0,
+      pitch: 40,
+      duration: 0,
+      center: [146.265366, -16.778374] // Milln Reef,
+    });
+    // props.features = new Map();
+    // this.queryRenderedFeatures({ layers: [props.mapbox.layerID] }).forEach(feature => props.features.set(feature.id, feature.properties));
+    // fn.onSearch();
+  },
+  util: {
+    tileFromCache(tile) {
+      const url = fn.util.tileToURL(tile);
+      return fn.util.urlFromCache(url);
+    },
+    urlFromCache(url) {
+      return window.caches
+      ? caches.open('mapbox-tiles')
+        .then(cache => cache.match(url, { ignoreSearch: true, ignoreVary: true }))
+        .then(match => match && match.blob())
+        .then(blob => blob ? URL.createObjectURL(blob) : url)
+        .catch(e => url)
+      : Promise.resolve(url);
+    },
+    lngLatInBounds(lng, lat, bounds) {
+      const lngLat = isNaN(lng) ? lng : { lng, lat, bounds };
+      if (!lngLat.bounds) lngLat.bounds = props.mapbox.source.elevation.bounds;
+      return lngLat.lng >= lngLat.bounds[0]
+      && lngLat.lng <= lngLat.bounds[2]
+      && lngLat.lat >= lngLat.bounds[1]
+      && lngLat.lat <= lngLat.bounds[3];
+    },
+    tileToURL(tile) {
+      return `https://api.mapbox.com/v4/${props.mapbox.source.elevation.simpleId}/${tile.join('/')}.webp?access_token=${props.mapbox.token}`;
+    },
+    lngLatZoomToTileMB(lng, lat, zoom) {
+      const lngLatZoom = isNaN(lng) ? lng : { lng, lat, zoom };
+      const latR = Math.sin(lngLatZoom.lat * Math.PI / 180);
+      const n = Math.pow(2, lngLatZoom.zoom);
+      const tileX = (n * (lngLatZoom.lng / 360 + 0.5)) % n + (lngLatZoom.lng < 0 ? n : 0);
+      const tileY = n * (0.5 - 0.25 * Math.log((1 + latR) / (1 - latR)) / Math.PI);
+      return [Math.floor(lngLatZoom.zoom), Math.floor(tileX), Math.floor(tileY)];
+    },
+    tileToLngLatZoom(tile) {
+      const zoom = tile[0];
+      const n = Math.pow(2, zoom);
+      const ni = Math.PI - 2 * Math.PI * tile[2] / n;
+      const lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(ni) - Math.exp(-ni)));
+      const lng = tile[1] / n * 360 - 180;
+      return { lng, lat, zoom };
+    },
+    lngLatZoomToTile(lng, lat, zoom) {
+      const lngLatZoom = isNaN(lng) ? lng : { lng, lat, zoom };
+      console.log(fn.util.lngLatZoomToTileMB(lngLatZoom));
+      const n = Math.pow(2, lngLatZoom.zoom);
+      const tileX = (lngLatZoom.lng + 180) / 360 * n;
+      const tileY = n * 0.5 * (1 - Math.log(
+        Math.tan(lngLatZoom.lat * Math.PI / 180)
+        + 1 / Math.cos(lngLatZoom.lat * Math.PI / 180)) / Math.PI);
+      return [Math.floor(lngLatZoom.zoom), Math.floor(tileX), Math.floor(tileY)];
+    },
+    uint8ToElevation(n, normalise) {
+      const max = 2430; // max height
+      const min = -5558; // max depth
+
+      const res100 = 1; // metres step for first 100m depth
+      const res200 = 5; // metres step for 100-200m depth
+      const space = 256; // total available values
+      const space100 = 100 / res100; // space used by first 100m
+      const space200 = 100 / res200; // space used by 100-200m
+      const overflow = (space - space100 - space200) / 2; // overflow space for remaining depth and elevation
+
+      if (normalise) {
+        const boundsHeight = 200;
+        if (n >= space - overflow) {
+          // console.log(n, n - space + overflow, (n - space + overflow) / overflow);
+          return boundsHeight * (n - space + overflow) / overflow + boundsHeight + space100 + space200;
+        } else if (n < overflow) return boundsHeight * (n / overflow);
+        else return boundsHeight + (n - overflow);
+      }
+
+      // const getValue = (z, extent, m, offset = 0) =>
+      //   Math.round((Math.min(extent, z) - offset) / (extent - offset) * m);
+
+      // for elevation above sea level
+      let elevation;
+      if (n >= space - overflow) elevation = (n - space + overflow) * max / overflow;
+      else if (n < overflow) elevation = n * (min + 200) / overflow - 200;
+      else if (n < overflow + space200) elevation = (n - overflow) / space200 * -100 - 100;
+      else elevation = (n - overflow - space200) / space100 * -100;
+
+      if (normalise) {
+        if (elevation < -200) {
+          elevation = (elevation + 200) / 25 - 200;
+        } else if (elevation > 0) elevation = elevation / 12;
+        elevation -= (min + 200) / 25 - 200;
+      }
+
+      return elevation;
+
+
+      // const encodeDepth = (depth) => {
+      //     depth = Math.round(depth);
+      //     // above sea-level uses top bracket
+      //     if (depth > 0) depth = space - overflow + getValue(depth, max, overflow);
+      //     // below sea-level
+      //     else {
+      //       depth = Math.abs(depth);
+      //       if (depth > 200) depth = overflow - getValue(depth, -min, overflow, 200);
+      //       else if (depth > 100) depth = overflow + space200 - getValue(depth, 200, space200, 100);
+      //       else depth = overflow + space200 + space100 - getValue(depth, 100, space100);
+      //     }
+      //     return depth;
+      // };
+    },
+  },
+};
+
+fn.init();
+</script>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: sans-serif;
+  font-weight: 300;
+}
+.map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+#map, .terrain {
+  width: 100%;
+  height: 100%;
+}
+.terrain {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width:  25vw;
+  height: 25vw;
+  background: #FFFC;
+}
+.controls {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  display: flex;
+  flex-direction: column;
+}
+.controls-img {
+  width: 8em;
+}
+.controls-img[src=""],
+.controls-img[src=""] ~ .controls-render { 
+  display: none;
+}
+</style>
+</body>

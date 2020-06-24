@@ -15,222 +15,592 @@
   <aside class="meta">
     <h1 class="meta-depth"></h1>
   </aside>
+  <div class="search">
+    <input class="search-input" placeholder="Search for a reef or island">
+    <ul class="search-results"></ul>
+  </div>
   <aside class="filter">
-    <div class="search">
-      <input class="search-input" placeholder="Search for a reef or island">
-      <ul class="search-results"></ul>
+    <div class="filter-items">
+      <header>Data Highlight</header>
+
+      <div class="filter-items--content">
+        <h3>GBRMPA identified reefs</h3>
+        <h4>Resilience</h4>
+        <label><input class="filter-item" data-type="status" data-value="hd" data-title="High Disturbance" data-colour="#FA0" type="checkbox"><strong>HD</strong> <u>H</u>igh risk of <u>d</u>isturbance</label>
+        <label><input class="filter-item" data-type="status" data-value="ld" data-title="Low Disturbance" data-colour="#04B" type="checkbox"><strong>LD</strong> <u>L</u>ow risk of <u>d</u>isturbance</label>
+        <label><input class="filter-item" data-type="status" data-value="hr" data-title="High Recovery" data-colour="#0B5" type="checkbox"><strong>HR</strong> <u>H</u>igh <u>r</u>ecovery potential</label>
+        <label><input class="filter-item" data-type="status" data-value="lr" data-title="Low Recovery" data-colour="#F60" type="checkbox"><strong>LR</strong> <u>L</u>ow <u>r</u>ecovery potential</label>
+​
+        <h4>Monitoring</h4>
+        <label><input class="filter-item" data-type="survey" data-key="Un" data-title="Unsurveyed" data-colour="#CAC" type="checkbox"><strong><u>Un</u></strong>surveyed (targeted)</label>
+        <label><input class="filter-item" data-type="survey" data-key="Mo" data-title="Monitored" data-value="aims|mmp|bzgz" data-colour="#0AC" type="checkbox"><strong><u>Mo</u></strong>nitored (LTMP, MMP, BZGZ)</label>
+        <label><input class="filter-item" data-type="survey" data-key="Su" data-title="Surveyed" data-value="cb|eotr" data-colour="#AC0" type="checkbox"><strong><u>Su</u></strong>rveyed (Bleaching Response, EOTR)</label>
+
+        <h3>Other identified reefs</h3>
+        <label><input class="filter-item" data-type="attr" data-key="Key" data-value="keysourcereef" data-title="Key Source Reef" data-colour="#50F" type="checkbox"><strong><u>Key</u></strong> Source Reefs</label>
+      </div>
+
+      <div class="filter-colours-key">
+        <header>Data Filter and Colour Key</header>
+        <div class="filter-colours"></div>
+      </div>
     </div>
   </aside>
+
+  <a class="logo" href="https://citizensgbr.org">
+    <img src="citizensgbr.svg">
+  </a>
 </div>
 <script>
-const $el = {
-  search: document.querySelector('.search-input'),
-  searchResults: document.querySelector('.search-results'),
-  depth: document.querySelector('.meta-depth'),
-};
-const props = {
-  mapbox: {
-    layer: {
-      features: 'gbr-features-all-data-limited-b7sjza',
-      elevation: 'gbr100-elevation-5m100-20m200-107o5v',
+  const $el = {
+    search: document.querySelector('.search-input'),
+    searchResults: document.querySelector('.search-results'),
+    filters: [ ...document.querySelectorAll('.filter-item') ],
+    colours: document.querySelector('.filter-colours'),
+    depth: document.querySelector('.meta-depth'),
+  };
+  const props = {
+    toggled: {},
+    data: {
+      gbrmpa: 'gbrmpa-reefs.json',
+      keysourcereefs: 'source-reefs.json',
+      features: 'GBR-Features-points.pbf',
     },
-    style: 'mapbox://styles/citizensgbr/ckbfua7qs392g1inrykf56d9m',
-    token: 'pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog',
-  },
-};
-const fn = {
-  data: {},
-  init() {
-    $el.search.addEventListener('input', this.onSearch);
-    $el.searchResults.addEventListener('click', this.onSearchResult);
+    mapbox: {
+      layer: {
+        labels: 'gbr-labels',
+        features: 'gbr-features',
+        elevation: 'gbr-elevation',
+      },
+      style: 'mapbox://styles/citizensgbr/ckbfua7qs392g1inrykf56d9m',
+      token: 'pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true',
+    },
+  };
+  const fn = {
+    init() {
+      $el.search.addEventListener('input', this.onSearch);
+      $el.searchResults.addEventListener('click', this.onSearchResult);
+      $el.filters.forEach($el => $el.addEventListener('change', this.onFilter));
+      $el.colours.addEventListener('change', fn.onToggle);
 
-    fetch('GBR-Features-points.pbf')
-    .then(e => e.arrayBuffer())
-    .then(this.onFeaturesData);
+      Promise.all(Object.keys(props.data).map(key => fetch(props.data[key])
+        .then(e => props.data[key].slice(-3) === 'pbf' ? e.arrayBuffer() : e.json())
+        .then(data => props.data[key] = data)))
+      .then(this.onData);
 
-    mapboxgl.accessToken = props.mapbox.token;
-    const map = props.map = new mapboxgl.Map({
-      container: 'map',
-      style: props.mapbox.style, // stylesheet location
-      center: [146, -16.77], // starting position [lng, lat]
-      zoom: 6, // starting zoom
-      attributionControl: false,
-    })
-    .addControl(new mapboxgl.AttributionControl({
-      customAttribution: '<a href="https://www.deepreef.org/bathymetry/65-3dgbr-bathy.html" title="Bathymetry data © www.deepreef.org 2017 (CC BY 4.0)">© www.deepreef.org</a> <a href="https://eatlas.org.au/data/uuid/ac8e8e4f-fc0e-4a01-9c3d-f27e4a8fac3c" title="GBR Features © GBRMPA 2014 (CC BY 4.0)">© GBRMPA</a> <a href="https://citizensgbr.org" title="Map and data modifications © CitizensGBR 2020 (CC BY 4.0)">© CitizensGBR</a> <a href="https://creativecommons.org/licenses/by/4.0/" title="Creative Commons Attribution 4.0 International"><strong>(CC BY 4.0)</strong></a>',
-    }));
-    map.once('render', map.resize);
-    map.once('load', this.onLoad);
-    map.on('mouseenter', props.mapbox.layer.elevation, () => {
-      map.getCanvas().style.cursor = 'crosshair';
-      map.on('mousemove', props.mapbox.layer.elevation, fn.onMove);
-    });
-    map.on('mouseleave', props.mapbox.layer.elevation, () => {
-      map.getCanvas().style.cursor = '';
-      map.off('mousemove', props.mapbox.layer.elevation, fn.onMove);
-      fn.onMove();
-    });
-  },
-  onMove(e) {
-    if (!e) {
-      if (props.popup && props.popup.isOpen()) props.popup.remove();
-      return;
-    }
-
-    const feature = e.features[0];
-    const depth = feature.properties.z * -1;
-
-    if (!props.popup) {
-      props.popup = new mapboxgl.Popup({
-        anchor: 'bottom',
-        closeButton: false,
-        closeOnClick: false,
-      });
-    }
-      
-    props.popup.setLngLat(e.lngLat);
-    if (!props.popup.isOpen()) {
-      props.popup.addTo(props.map);
-    }
-
-    props.popup.setHTML(`<div class="meta-item">
-      <strong>Depth ${depth}m</strong>
-      <small>${e.lngLat.lng.toFixed(3)}, ${e.lngLat.lat.toFixed(3)}</small>
-    </div>`)
-    ;
-  },
-  onFeatureSelect(e) {
-    const feature = props.features.find(feature => feature.properties.id === e.features[0].properties.id);
-    fn.toggleFeature(feature);
-  },
-  onDepth(e) {
-    const depth = e && e.features[0].properties.z * -1;
-    $el.depth.innerHTML = isNaN(depth) ? '' : (depth === 100 && '>100') || depth;
-
-
-  },
-  onFeaturesData(data) {
-    props.features = geobuf.decode(new Pbf(data)).features;
-    props.features.forEach((feature, index) => {
-      feature.properties.search = [feature.properties.name, feature.properties.id].filter(v => v).join(' ');
-      const lat = feature.geometry.coordinates[1];
-      feature.properties.sector = (lat < -14.9 && 'Central') || (lat < -20.5 && 'Southern') || 'Northern';
-      feature.properties.index = index;
-    });
-    fn.onSearch();
-  },
-  onLoad() {
-    props.map.easeTo({
-      zoom: 10,
-      bearing: 0,
-      pitch: 40,
-      duration: 2000,
-      center: [146.265366, -16.778374] // Milln Reef,
-    });
-    // props.features = new Map();
-    // this.queryRenderedFeatures({ layers: [props.mapbox.layerID] }).forEach(feature => props.features.set(feature.id, feature.properties));
-    // fn.onSearch();
-  },
-  onSearch() {
-    if (!props.features) return;
-    const query = $el.search.value;
-    
-    if (!query) {
-      $el.searchResults.innerHTML = '';
-    }
-
-    $el.searchResults.innerHTML = props.features.reduce((_, feature) => {
-      let searchScore = fn.util.search.score(feature.properties.search, query, true);
-      if (searchScore === 0) return _;
-      return _.concat({ properties: feature.properties, searchScore });
-    }, [])
-    .sort((a, b) => b.searchScore - a.searchScore || b.search - a.search)
-    .reduce((_, feature) =>
-      _.concat(`<li class="meta-item" data-index="${feature.properties.index}">
-        <strong>${feature.properties.name || feature.properties.id}</strong>
-        <small>${feature.properties.type || ''}, ${feature.properties.sector} GBR</small>
-      </li>`), '');
-  },
-  onSearchResult(e) {
-    const $li = e.target.closest('li');
-    if (!$li) return;
-
-    const feature = props.features[+$li.dataset.index];
-
-    props.map.easeTo({
-      zoom: 10,
-      bearing: 0,
-      pitch: 40,
-      duration: 2000,
-      center: feature.geometry.coordinates,
-    });
-
-    fn.toggleFeature(feature);
-  },
-  toggleFeature(feature) {
-    if (props.popup && props.popup.isOpen()) props.popup.remove();
-    if (!feature) return;
-
-    if (props.popup) {
-      props.popup.setLngLat(feature.geometry.coordinates);
-    } else {
-      props.popup = new mapboxgl.Popup({
-        anchor: 'bottom',
-        // closeButton: false,
-        closeOnClick: false,
+      mapboxgl.accessToken = props.mapbox.token;
+      const map = props.map = new mapboxgl.Map({
+        container: 'map',
+        style: props.mapbox.style, // stylesheet location
+        center: [146, -16.77], // starting position [lng, lat]
+        zoom: 6, // starting zoom
+        attributionControl: false,
       })
-      .setLngLat(feature.geometry.coordinates);
-    }
+      .addControl(new mapboxgl.AttributionControl({
+        customAttribution: '<a href="https://www.deepreef.org/bathymetry/65-3dgbr-bathy.html" title="Bathymetry data © www.deepreef.org 2017 (CC BY 4.0)">© www.deepreef.org</a> <a href="https://eatlas.org.au/data/uuid/ac8e8e4f-fc0e-4a01-9c3d-f27e4a8fac3c" title="GBR Features © GBRMPA 2014 (CC BY 4.0)">© GBRMPA</a> <a href="https://citizensgbr.org" title="Map and data modifications © CitizensGBR 2020 (CC BY 4.0)">© CitizensGBR</a> <a href="https://creativecommons.org/licenses/by/4.0/" title="Creative Commons Attribution 4.0 International"><strong>(CC BY 4.0)</strong></a>',
+      }));
+      map.once('render', map.resize);
+      map.once('load', this.onLoad);
 
-    const area = (feature.properties.km2 < 1 && feature.properties.km2.toFixed(2))
-      || (feature.properties.km2 < 10 && feature.properties.km2.toFixed(1))
-      || Math.round(feature.properties.km2);
+      map.on('click', () => delete $el.search.dataset.focus);
 
-    props.popup.setHTML(`<div class="meta-item">
-      <strong>${feature.properties.name || feature.properties.id}</strong>
-      <small>${feature.properties.type || ''}, ${+area}km<sup>2</sup><br>
-      ${feature.properties.sector} GBR</small>
-    </div>`)
-    .addTo(props.map);
-  },
-  util: {
-    search: {
-      query(str, query, score) {
-        const index = str === query ? 0
-        : (!query || !str) && -1
-          || str.toLowerCase().indexOf(query.toLowerCase());
-        return score
-        ? (index < 0
-          ? 0
-          : (str.length - index + query.length) / (2 * str.length))
-        : index; 
+      const renderFilter = fn.util.debounce(fn.renderFilter, 500);
+      map.on('move', renderFilter);
+      map.on('sourcedata', renderFilter);
+    
+      // alert('TRY SETTING STATE TO A PROPERTY (e.g. ID) AND MATCHING THAT PROPERTY RATHER THAN HOVER = TRUE!')    
+      
+      // map.on('mousemove', props.mapbox.layer.elevation, this.onDepth);
+      // map.on('mouseout', props.mapbox.layer.elevation, () => this.onDepth());
+      map.on('mouseenter', props.mapbox.layer.elevation, () => {
+        map.getCanvas().style.cursor = 'auto';
+        map.on('mousemove', props.mapbox.layer.elevation, fn.onMove);
+      });
+      map.on('mouseleave', props.mapbox.layer.elevation, () => {
+        map.getCanvas().style.cursor = '';
+        map.off('mousemove', props.mapbox.layer.elevation, fn.onMove);
+        fn.onMove();
+      });
+    },
+    onData() {
+      const meta = props.data.gbrmpa.meta;
+      const gidMap = {};
+      props.data.gbrmpa.list.forEach((item) => {
+        if (!gidMap[item.gid]) gidMap[item.gid] = {};
+
+        const data = gidMap[item.gid];
+        data.gbrmpa = true;
+
+        if ('mgmt' in item) data.mgmt = meta.mgmt[item.mgmt];
+        if (item.status) data.status = item.status;
+        if (item.zone) {
+          data.zone = item.zone.map(zone => ({
+            ...meta.zone[zone[0]],
+            km2: zone[1] || 0,
+          }));
+        }
+        if (item.survey) {
+          data.survey = item.survey.map(i => meta.survey[i]);
+        }
+      });
+
+      props.data.keysourcereefs.forEach((gid) => {
+        if (!gidMap[gid]) gidMap[gid] = {};
+        gidMap[gid].keysourcereef = true;
+      });
+
+      props.data.features = geobuf.decode(new Pbf(props.data.features)).features;
+      props.data.features.forEach((feature, index) => {
+        feature.properties.search = [feature.properties.name, feature.properties.gid].filter(v => v).join(' ');
+        const lat = feature.geometry.coordinates[1];
+        feature.properties.sector = (lat < -14.9 && 'Central') || (lat < -20.5 && 'Southern') || 'Northern';
+        feature.properties.index = index;
+        if (gidMap[feature.properties.gid]) {
+          Object.assign(feature.properties, gidMap[feature.properties.gid], feature.properties);
+        }
+      });
+      fn.onSearch();
+    },
+    onFilter() {
+      const filters = fn.util.getFilters();
+      console.log(filters);
+
+      // const itemtest = { value: }
+      // filters.survey.forEach(survey =>
+      //       (survey.value
+      //         ? itemtest.value && survey.value.find(v => itemtest.value.toLowerCase().indexOf(v) === 0)
+      //         : !itemtest.survey) && matches.push(survey));
+
+      const filtered = props.filtered = { gid: {}, filter: {} };
+      props.data.features.forEach((feature) => {
+        const item = feature.properties;
+        if (!item.gbrmpa && !item.keysourcereef) return;
+
+        const matches = [];
+        if (filters.status && item.status) {
+          filters.status.forEach(status =>
+            item.status.toLowerCase().indexOf(status.value) >= 0 && matches.push(status));
+        }
+        if (filters.survey) {
+          filters.survey.forEach(survey =>
+            (survey.value
+              ? item.survey && survey.value.find(v => item.survey.find(s => s.indexOf(v) === 0))
+              : !item.survey) && matches.push(survey));
+        }
+        if (filters.attr) {
+          filters.attr.forEach(attr =>
+            item[attr.value] && matches.push(attr));
+        }
+
+        if (matches.length) {
+
+          const key = matches.reduce((_, m) => _ + (m.key || m.value), '').toLowerCase();
+          if (!filtered.filter[key]) {
+            const label = matches.reduce((_, m, i) => {
+              const l = m.key || [].concat(m.value).join('').toUpperCase();
+              if(_.type !== m.type) {
+                _.type = m.type;
+                _.list.push(`<abbr title="${m.title}">${l}</abbr>`);
+              } else {
+                _.list[_.list.length - 1] += `<abbr title="${m.title}">${l}</abbr>`;
+              }
+              return _;
+            }, { list: [] }).list.join(' / ');
+
+            filtered.filter[key] = {
+              key,
+              label,
+              list: [],
+              colour: matches.reduce((_, m) =>
+                m.colour.map((c, i) => _[i] + parseInt(c, 16)), [0, 0, 0])
+              .reduce((_, c) => _ + (c % 16).toString(16), '#'),
+            }
+          }
+          filtered.active = true;
+          filtered.gid[item.gid] = feature;
+          filtered.filter[key].list.push(feature);
+          feature.filter = filtered.filter[key];
+        } else {
+          filtered.reset = true;
+        }
+        // if (filters.status && item.status) filters.status.forEach(s => item.status.indexOf(s) === 0 && matches.push(s))
+        // filters.
+
+      });
+
+      const filteredKeys = Object.keys(filtered.filter);
+      if (filteredKeys.length) {
+        $el.colours.parentElement.dataset.filtered = '';
+      } else {
+        delete $el.colours.parentElement.dataset.filtered; 
+      }
+
+      $el.colours.innerHTML = filteredKeys.map(key =>
+        `<div class="filter-colours--item" style="background:${filtered.filter[key].colour}" ${props.toggled[key] ? 'data-toggled' : ''}>
+          <label><input data-key="${key}" type="checkbox" ${props.toggled[key] ? '' : 'checked'}><strong>${filtered.filter[key].label}</strong><span>(${filtered.filter[key].list.length})</span></label>
+        </div>`).join('');
+
+      fn.renderFilter();
+    },
+    onToggle(e) {
+      props.toggled[e.target.dataset.key] = !e.target.checked || null;
+      if (e.target.checked) {
+        delete e.target.parentElement.parentElement.dataset.toggled;
+      } else {
+        e.target.parentElement.parentElement.dataset.toggled = '';
+      }
+      fn.renderFilter();
+    },
+    renderFilter() {
+      const filtered = props.filtered || {};
+      if (filtered.running || (!filtered.active && !filtered.reset) || !props.mapbox.layer.ui) return;
+      filtered.running = true;
+      props.map.queryRenderedFeatures({ layers: [props.mapbox.layer.ui] })
+      .forEach((feature) => {
+        const state = props.map.getFeatureState(feature);
+        const toggled = filtered.gid[feature.properties.gid] && props.toggled[filtered.gid[feature.properties.gid].filter.key] || null;
+        // if (!filtered.gid[feature.properties.gid] !== !state.filtered || toggled != state.toggled) {
+          props.map.setFeatureState(feature, {
+            colour: filtered.gid[feature.properties.gid] ? filtered.gid[feature.properties.gid].filter.colour : null,
+            filtered: filtered.gid[feature.properties.gid] ? feature.properties.gid : null,
+            toggled,
+          });
+        // }
+      });
+      filtered.running = false;
+    },
+    onMove(e) {
+      if (!e) {
+        if (props.popup && props.popup.isOpen()) props.popup.remove();
+        return;
+      }
+
+      const feature = e.features[0];
+      const z = feature.properties.z;
+      const depth = z > 0 ? z : (z <= -100 && `~${Math.max(200, -z + 10)}`)
+        || `${-z}`;
+
+      if (!props.popup) {
+        props.popup = new mapboxgl.Popup({
+          anchor: 'top-left',
+          closeButton: false,
+          closeOnClick: false,
+          className: 'popup-hover',
+          offset: [9, 18],
+        });
+        
+        if (!props.popupElement) {
+          props.popupElement = document.createElement('div');
+          props.popupElement.className = 'popup-hover--content meta-item';
+        }
+        props.popup.setDOMContent(props.popupElement);
+        props.popup.trackPointer();
+      }
+      
+      // props.popup.setLngLat(e.lngLat)
+      if (!props.popup.isOpen()) {
+        props.popup.addTo(props.map);
+      }
+
+      props.popupElement.innerHTML = `<strong>Point ${z > 0 ? 'Elevation' : 'Depth'} ${depth}m</strong>
+        <small>${e.lngLat.lng.toFixed(3)}, ${e.lngLat.lat.toFixed(3)}</small>`;
+
+      if (props.feature && !props.popupReef) {
+        const data = props.data.features.find(f => f.properties.id === props.feature.properties.id);
+        props.popupReef = new mapboxgl.Popup({
+          anchor: 'bottom',
+          closeButton: false,
+          closeOnClick: false,
+          className: 'popup-hover',
+          offset: 50,
+        }).setLngLat(data.geometry.coordinates);
+        const $elPop = document.createElement('div');
+        let html = `
+        <h3>${props.feature.properties.name || [props.feature.properties.type, props.feature.properties.gid].join(' ')}</h3>
+        <small>${data.properties.zone.map((z, i, l) => z.name + (l.length > 1 && z.km2 ? ` (${Math.floor(100 * z.km2/data.properties.km2)}%)` : '')).join('<br>')}<br>${+props.feature.properties.km2.toFixed(2)}km²</small>
+        <small>Modelling: ${data.properties.status}</small><br>
+        <small>Monitoring programs: ${(data.properties.survey || ['none']).join(', ')}</small>
+        `;
+        $elPop.innerHTML = html;
+        $elPop.className = 'popup-hover--content popup-hover--feature meta-item';
+        props.popupReef.setDOMContent($elPop);
+        props.popupReef.addTo(props.map);
+        console.log(props.feature, data);
+
+      } else if (!props.feature && props.popupReef) {
+        props.popupReef.remove();
+        delete props.popupReef;
+      }
+    },
+    onFeatureSelect(e) {
+      const feature = props.data.features.find(feature => feature.properties.id === e.features[0].properties.id);
+      fn.toggleFeature(feature);
+    },
+    onDepth(e) {
+      const depth = e && e.features[0].properties.z * -1;
+      $el.depth.innerHTML = isNaN(depth) ? '' : (depth === 100 && '>100') || depth;
+
+
+    },
+    onLoad() {
+      props.map.easeTo({
+        zoom: 10,
+        bearing: 0,
+        pitch: 40,
+        duration: 2000,
+        center: [146.265366, -16.778374] // Milln Reef,
+      });
+
+      const map = props.map;
+
+      props.mapbox.layer.ui = 'gbr-features-ui';
+
+      const layer = map.getLayer(props.mapbox.layer.features);
+
+      props.map.addLayer({
+        id: props.mapbox.layer.ui,
+        type: 'fill-extrusion',
+        source: 'composite',
+        'source-layer': layer.sourceLayer,
+        layout: {},
+        paint: {
+          'fill-extrusion-color': [
+            'case',
+            ['any',
+              ['==', ['get', 'id'], ['feature-state', 'hover']],
+              ['==', ['get', 'id'], ['feature-state', 'selected']],
+              ['all', ['==', ['get', 'gid'], ['feature-state', 'filtered']], ['!', ['to-boolean', ['feature-state', 'toggled']]]],
+            ],
+            ['case',
+              ['to-boolean', ['feature-state', 'hover']],
+              '#FF0',
+              ['case', 
+                ['to-boolean', ['feature-state', 'selected']],
+                '#F0F',
+                ['feature-state', 'colour'],
+              ],
+            ],
+            '#FFF'
+          ],
+          'fill-extrusion-opacity': 0.5,
+          'fill-extrusion-base': 799,
+          'fill-extrusion-height': [
+            'case',
+            ['any',
+              ['==', ['get', 'id'], ['feature-state', 'hover']],
+              ['==', ['get', 'id'], ['feature-state', 'selected']],
+              ['all', ['==', ['get', 'gid'], ['feature-state', 'filtered']], ['!', ['to-boolean', ['feature-state', 'toggled']]]],
+            ],
+            ['case', ['to-boolean', ['feature-state', 'hover']], 1800, 1200],
+            1
+          ],
+        }
+      }, props.mapbox.layer.labels);
+
+
+      map.on('click', props.mapbox.layer.features, (e) => {
+        const feature = e.features[0];
+        const state = map.getFeatureState(feature);
+        const reset = state && state.selected === feature.properties.id;
+        console.log(state.selected, feature.properties.id)
+        map.setFeatureState(feature, { selected: reset ? null : feature.properties.id });
+      });
+
+
+      props.feature;
+      // map.on('mousemove', props.mapbox.layer.ui, (e) => {
+      map.on('mousemove', props.mapbox.layer.features, (e) => {
+        const feature = e.features[0];
+        if (props.feature && feature.properties.id === props.feature.properties.id) return;
+        if (props.feature) {
+          // map.setFilter(props.mapbox.layer.ui, ['==', ['get', 'id'], null]);
+
+          map.setFeatureState(props.feature, { hover: false });
+        }
+        // if (props.popupElement) {
+        //   props.popupElement.dataset.feature = feature.properties.id;
+        // }
+
+        props.feature = feature;
+        map.setFeatureState(feature, { hover: feature.properties.id });
+        // map.setFilter(props.mapbox.layer.ui, ['==', ['get', 'id'], feature.properties.id]);
+
+        // if (e.features.length > 0) {
+        //   if (hoveredStateId) {
+        //     map.setFeatureState(
+        //       { source: 'composite', sourceLayer: props.mapbox.layer.ui,  id: hoveredStateId },
+        //       { hover: false }
+        //     );
+        //   }
+        //   hoveredStateId = e.features[0].id;
+        //   console.log(hoveredStateId)
+        //   map.setFeatureState(
+        //     { source: 'composite', sourceLayer: props.mapbox.layer.ui, id: hoveredStateId },
+        //     { hover: true }
+        //   );
+        // }
+      });
+      map.on('mouseleave', props.mapbox.layer.ui, () => {
+        // if (props.popupElement) {
+        //   delete props.popupElement.dataset.feature;
+        // }
+        if (props.feature) {
+          // map.setFilter(props.mapbox.layer.ui, ['==', ['get', 'id'], null]);
+          // map.setFilter(props.mapbox.layer.ui, null);
+
+          map.setFeatureState(props.feature, { hover: false });
+        }
+        props.feature = null;
+      });
+
+
+
+      // setTimeout(() => {
+      //   const sourceLayer = props.map.getLayer(props.mapbox.layer.features).sourceLayer;
+      //   const source = props.map.getSource(sourceLayer);
+      //   console.log(source, sourceLayer, props.map);
+
+      //   props.map.addLayer({
+      //     id: 'feature-interaction',
+      //     type: 'fill-extrusion',
+      //     source: sourceLayer,
+      //     layout: {},
+      //     paint: {
+      //       // 'fill-color': '#627BC1',
+      //       // 'fill-opacity': [
+      //       //   'case',
+      //       //   ['boolean', ['feature-state', 'hover'], false],
+      //       //   1,
+      //       //   0.5
+      //       // ],
+      //       'fill-extrusion-height': 1200,
+      //     }
+      //   });  
+      // }, 10000)
+      
+      // props.data.features = new Map();
+      // this.queryRenderedFeatures({ layers: [props.mapbox.layerID] }).forEach(feature => props.data.features.set(feature.id, feature.properties));
+      // fn.onSearch();
+      fn.onFilter();
+    },
+    onSearch() {
+      if (!props.data.features) return;
+      const query = $el.search.value;
+      $el.search.dataset.focus = '';
+      if (!query) {
+        $el.searchResults.innerHTML = '';
+        return;
+      }
+
+      $el.searchResults.innerHTML = props.data.features.reduce((_, feature) => {
+        let searchScore = fn.util.search.score(feature.properties.search, query, true);
+        if (searchScore === 0) return _;
+        return _.concat({ properties: feature.properties, searchScore });
+      }, [])
+      .sort((a, b) => b.searchScore - a.searchScore || b.search - a.search)
+      .reduce((_, feature) =>
+        _.concat(`<li class="meta-item" data-index="${feature.properties.index}">
+          <strong>${feature.properties.name || feature.properties.gid}</strong>
+          <small>${feature.properties.type || ''}, ${feature.properties.sector} GBR${feature.properties.gbrmpa || feature.properties.keysourcereef ? ' (potential)' : ''}</small>
+        </li>`), '');
+    },
+    onSearchResult(e) {
+      const $li = e.target.closest('li');
+      if (!$li) return;
+
+      const feature = props.data.features[+$li.dataset.index];
+
+      $el.search.value = feature.properties.name || feature.properties.gid;
+      delete $el.search.dataset.focus;
+
+      props.map.easeTo({
+        zoom: 10,
+        bearing: 0,
+        pitch: 40,
+        duration: 2000,
+        center: feature.geometry.coordinates,
+      });
+    },
+    util: {
+      debounce(fn, delay) {
+        let debounced;
+        return (...args) => {
+          clearTimeout(debounced);
+          debounced = setTimeout(() => fn(...args), delay);
+        };
       },
-      score(str, query, hasAllWords) {
-        const strLower = str.toLowerCase();
-        const strWords = strLower.split(/\W+/);
-        const queryLower = query.toLowerCase();
-        const queryWords = queryLower.split(/\W+/);
+      throttle(fn, delay = 500) {
+        let throttled;
+        let tailArgs;
 
-        return fn.util.search.query(str, query, true) +
-        queryWords.reduce((total, queryWord, i) => {
-          // exclude previously non-matching queries
-          if (hasAllWords && i && !total) return 0;
-          // score the query word against the string
-          const wordScore = strWords.reduce((subtotal, strWord, ii) => {
-            return subtotal || fn.util.search.query(strWord, queryWord, true) / (ii + 1);
-          }, 0) / (i + 1);
-          // exlude non-matching queries if all words are required
-          return hasAllWords && i && !wordScore
-          ? 0
-          // otherwise sum scores
-          : total + wordScore;
-        }, 0);
+        return (...args) => {
+          if (throttled) {
+            tailArgs = args;
+            return;
+          }
+
+          throttled = true;
+          fn(...args);
+          setTimeout(() => {
+            throttled = null;
+            if (tailArgs) {
+              fn(...tailArgs);
+              tailArgs = null;
+            }
+          }, delay);
+        };
       },
-    }
-  },
-};
+      getFilters() {
+        return $el.filters.reduce((_, filter) => {
+          if (filter.checked) {
+            _[filter.dataset.type] = [].concat(_[filter.dataset.type] || []).concat({
+              title: filter.dataset.title,
+              type: filter.dataset.type,
+              key: filter.dataset.key,
+              value: filter.dataset.value ? filter.dataset.value.split('|') : null,
+              colour: (filter.dataset.colour || '').slice(1).split(''),
+            });
+          }
+          return _
+        }, {});
+      },
+      search: {
+        query(str, query, score) {
+          const index = str === query ? 0
+          : (!query || !str) && -1
+            || str.toLowerCase().indexOf(query.toLowerCase());
+          return score
+          ? (index < 0
+            ? 0
+            : (str.length - index + query.length) / (2 * str.length))
+          : index; 
+        },
+        score(str, query, hasAllWords) {
+          const strLower = str.toLowerCase();
+          const strWords = strLower.split(/\W+/);
+          const queryLower = query.toLowerCase();
+          const queryWords = queryLower.split(/\W+/);
 
-fn.init();
+          return fn.util.search.query(str, query, true) +
+          queryWords.reduce((total, queryWord, i) => {
+            // exclude previously non-matching queries
+            if (hasAllWords && i && !total) return 0;
+            // score the query word against the string
+            const wordScore = strWords.reduce((subtotal, strWord, ii) => {
+              return subtotal || fn.util.search.query(strWord, queryWord, true) / (ii + 1);
+            }, 0) / (i + 1);
+            // exlude non-matching queries if all words are required
+            return hasAllWords && i && !wordScore
+            ? 0
+            // otherwise sum scores
+            : total + wordScore;
+          }, 0);
+        },
+      }
+    },
+  };
+
+  fn.init();
 </script>
 <style>
 html, body {
@@ -252,7 +622,90 @@ html, body {
   height: 100%;
 }
 .filter {
-  position:  absolute;
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 1em;
+  max-height: calc(100vh - 8.8em);
+  box-sizing: border-box;
+  display: flex;
+}
+.filter-items {
+  width: 100%;
+  margin-top: 2px;
+  background: #efefef;
+  box-shadow: 0 0.1em 0.1em rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+.filter-items header {
+  padding: 0.75em;
+  font-size: 0.8em;
+  margin: 0;
+  font-weight: 300;
+  background: #222;
+  color: #CCC;
+}
+.filter-items--content {
+  padding: 0.6em;
+}
+.filter-items h3 {
+  margin: 1em 0 0.4em;
+  font-weight: 400;
+}
+.filter-items h3:first-child {
+  margin-top: 0;
+}
+.filter-items h4 {
+  margin: 0.75em 0 0.4em;
+  font-size:  0.9em;
+}
+.filter-items label {
+  display: block;
+  font-size:  0.8em;
+}
+.filter-colours-key {
+  flex-shrink: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.filter-colours-key:not([data-filtered]) header {
+  display: none;
+}
+.filter-colours {
+  overflow: auto;
+  flex-shrink: 1;
+  display: flex;
+  flex-direction: column;
+}
+.filter-colours--item {
+  padding:  0.6em;
+}
+.filter-colours--item[data-toggled] {
+  order: 1;
+  opacity: 0.5;
+}
+.filter-colours--item label {
+  background: #fffd;
+  line-height: 1.4em;
+}
+.filter-colours--item strong {
+  font-weight: 600;
+  display: inline-block;
+  margin-left:  0.4em;
+}
+.filter-colours--item span {
+  display: inline-block;
+  margin-left: 0.5em;
+}
+.filter-colours--item abbr:hover {
+  text-decoration: none;
+  line-height: 1em;
+}
+.search {
+  position: absolute;
   left: 0;
   top: 0;
   margin: 1em;
@@ -270,10 +723,14 @@ html, body {
   margin: 0;
   padding: 0;
   max-height: 10em;
-  overflow:  auto;
+  overflow: auto;
+  visibility: hidden;
+  transition: 0.1s visibility;
 }
-.search-results:empty {
-  display: none;
+.search-input:focus ~ .search-results:not(:empty),
+.search-input[data-focus] ~ .search-results:not(:empty) {
+  transition: none;
+  visibility: visible;
 }
 .search-results li {
   background: #fff;
@@ -291,12 +748,38 @@ html, body {
   display: block;
   margin-bottom: 0.2em;
 }
-.mapboxgl-popup-content {
+.popup-hover {
   pointer-events: none;
 }
-.mapboxgl-popup-content .meta-item {
+.popup-hover .mapboxgl-popup-content {
+  overflow: hidden;
+}
+.popup-hover .mapboxgl-popup-tip {
+  display: none;
+}
+.popup-hover--feature {
+
+}
+.popup-hover--content {
   text-align: center;
   margin-top:  0.4em;
+  min-width: 7.5em;
+}
+.popup-hover--content:not(.popup-hover--feature) {
+  background: #222;
+  box-shadow: 0 0 0 2em #222;
+  color:  #fff;
+}
+.popup-hover--content h3 {
+  font-size: 1.25em;
+  display: block;
+  margin: 0 0 0.4em;
+  font-weight: 300;
+}
+.popup-hover--content h3 + small {
+  /* line-height: 2em; */
+  display: block;
+  margin-bottom:  1em;
 }
 .meta {
   position: absolute;
@@ -333,6 +816,31 @@ html, body {
 }
 .mapboxgl-marker svg > g > g:first-child {
   opacity: 0.4;
+}
+.logo {
+  position: absolute;
+  bottom:  2em;
+  width:  11em;
+  fill:  #003556;
+  right:  1em;
+  z-index: 0;
+}
+.logo::before {
+  content: '';
+  position: absolute;
+  left: -1em;
+  right: -1em;
+  top: -0.75em;
+  bottom: -0.55em;
+  display: block;
+  transition: 0.4s transform;
+  transform: scaleX(0);
+  transform-origin: 100% 0;
+  background: #ffffff80;
+  z-index: -1;
+}
+.logo:hover::before {
+  transform: scaleX(1);
 }
 </style>
 </body>
