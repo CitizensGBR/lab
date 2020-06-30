@@ -8,6 +8,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.js"></script>
   <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
   <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+  <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
 </head>
 <body>
 <div class="map">
@@ -23,7 +25,6 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.117.1/build/three.module.js';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.117.1/examples/jsm/controls/OrbitControls.js';
 import Martini from 'https://cdn.jsdelivr.net/gh/mapbox/martini@0.2.0/index.js';
-console.log(THREE, Martini);
 
 // https://api.mapbox.com/v4/citizensgbr.9mxdp93s/10/929/562.webp?sku=101CCseLIySMe&access_token=pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true
 
@@ -47,10 +48,20 @@ const $el = {
 };
 
 const props = {
+  data: {
+    features: 'GBR-Features-points.pbf',
+  },
   mapbox: {
     layer: {
-      features: 'gbr-features-all-data-limited-b7sjza',
+      features: 'gbr-features',
       elevation: 'citizensgbr-9mxdp93s',
+      ui: 'gbr-features-ui',
+    },
+    tilesets: {
+      gbr30: {
+        id: 'citizensgbr.ccpe22dl',
+        zoom: 12,
+      },
     },
     style: 'mapbox://styles/citizensgbr/ckbndm8112acp1inwzltj847o',
     token: 'pk.eyJ1IjoiY2l0aXplbnNnYnIiLCJhIjoiY2poem8xZGk4MHo4NDNscGJsNGxzdHl6NiJ9._B84xipGf6JtH64bRGqlog&fresh=true',
@@ -59,6 +70,116 @@ const props = {
 const fn = {
   init() {
     $el.controls.render.addEventListener('click', this.renderTerrain);
+
+    const x = -10.9;
+    const xy = fn.util.elevationToRGB(x);
+    console.log(x, xy, fn.util.rgbToElevation(xy));
+    GeoTIFF.fromUrl('moore-reef-sq.tif')
+    .then(tiff => tiff.getImage())
+    .then((image) => {
+      const width = image.getWidth();
+      const height = image.getHeight();
+      const tileWidth = image.getTileWidth();
+      const tileHeight = image.getTileHeight();
+      const samplesPerPixel = image.getSamplesPerPixel();
+
+      // when we are actually dealing with geo-data the following methods return
+      // meaningful results:
+      const origin = image.getOrigin();
+      const resolution = image.getResolution();
+      const bbox = image.getBoundingBox();
+      console.log({
+        width,
+        height,
+        tileWidth,
+        tileHeight,
+        samplesPerPixel,
+        origin,
+        resolution,
+        bbox,
+      });
+
+      console.log(width * height)
+
+      return image.readRasters({ samples: [0] })
+      .then(([ values ]) => {
+        const dim = Math.max(width, height);
+        const sq = 256 ** 2;
+        const max = dim ** 2;
+        const min = width * height;
+        const r2 = max / sq;
+        const r = dim / 256;
+        const pixels = new Float32Array(sq);
+        const start = (max - min) / 2;
+        let ir, i;
+        console.log({ start, max, min, values, r });
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = width;
+        canvas.height = height;
+        const imagedata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imagedata.data;
+        // for (let y = 0; y < 256; y++) {
+        //   for (let x = 0; x < 256; x++) {
+        //     i = (y * 256) + x;
+        //     ir = i * r;
+        //     if (ir < start || ir > start + min) pixels[i] = -200;
+        //     else pixels[i] = Math.floor(values[Math.floor(ir - start)]);
+        //     pixels[i] *= 30;
+        //   }
+        //   // console.log(ir, ir < start || ir > start + min ? false : [Math.floor(ir - start), values[Math.floor(ir - start)]])
+        // }
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            i = (y * width) + x;
+            // const sign = values[i] < 0 ? -1 : 1;
+            // const value = Math.abs(values[i]) < 1 ? 0 : Math.log(Math.abs(values[i])) * sign * 100 * Math.log(100);
+            const value = values[i] * 30;
+            const rgb = fn.util.elevationToRGB(value);
+            if (!y) console.log(values[i], rgb, fn.util.rgbToElevation(rgb));
+            data[i * 4] = rgb[0];
+            data[i * 4 + 1] = rgb[1];
+            data[i * 4 + 2] = rgb[2];
+            data[i * 4 + 3] = 255;
+            // const ip = (y / r * 256) + x / r;
+            // if (!y) {
+            //   console.log(Math.floor(ip));
+            //   n[Math.floor(ip)] = true;
+            // }
+            // pixels[Math.floor(ip)] = Math.max(0, values[i] * -30);
+
+        //     ir = i * r;
+        //     if (ir < start || ir > start + min) pixels[i] = -200;
+        //     else pixels[i] = Math.floor(values[Math.floor(ir - start)]);
+        //     pixels[i] *= 30;
+          }
+          console.log(data[i * 4])
+          // console.log(ir, ir < start || ir > start + min ? false : [Math.floor(ir - start), values[Math.floor(ir - start)]])
+        }
+        ctx.putImageData(imagedata, 0, 0);
+
+        canvas.toBlob((blob) => {
+          const onload = () => {
+            $el.controls.img.removeEventListener('load', onload);
+            URL.revokeObjectURL(url);
+          };
+          $el.controls.img.addEventListener('load', onload);
+          const url = URL.createObjectURL(blob);
+          $el.controls.img.src = url;
+        });
+        // fn.renderTerrain(pixels, 'pixels');
+      });
+    });
+
+
+
+    Promise.all(Object.keys(props.data).map(key => fetch(props.data[key])
+        .then(e => props.data[key].slice(-3) === 'pbf'
+          ? e.arrayBuffer().then(b => geobuf.decode(new Pbf(b)).features) 
+          : e.json())
+        .then(data => props.data[key] = data)))
+      .then(this.onData);
 
     mapboxgl.accessToken = props.mapbox.token;
     const map = props.map = new mapboxgl.Map({
@@ -75,7 +196,9 @@ const fn = {
     map.once('render', map.resize);
     map.once('load', this.onLoad);
     map.on('move', this.onMove);
-    map.on('click', this.onClick);
+    // map.on('click', this.onClick);
+    // map.on('move', props.mapbox.layer.features, () => console.log('move!'));
+
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 2000);
     camera.position.set(300, 0, 300);
@@ -120,45 +243,75 @@ const fn = {
   renderScene() {
     props.three.renderer.render(props.three.scene, props.three.camera);
   },
-  renderTerrain(tile) {
-    const canvas = document.createElement('canvas');
-    canvas.width = $el.controls.img.naturalWidth;
-    canvas.height = $el.controls.img.naturalHeight;
-    console.log(canvas.width, canvas.height)
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage($el.controls.img, 0, 0);
-    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    const tileSize = 256;
-    const gridSize = 257;
+  renderTerrain(input, inputType = 'img') {
+    console.log({ inputType });
+    let pixels, tileSize;
+    if (inputType === 'pixels') {
+      pixels = input;
+      tileSize = pixels.length ** 0.5;
+      console.log(pixels, tileSize)
+    } else {
+      const canvas = inputType === 'img' ? document.createElement('canvas') : input;
+      const ctx = canvas.getContext('2d');
+      console.log(canvas.width);
+      if (inputType === 'img') {
+        canvas.width = 256;
+        canvas.height = 256;
+        const iw = $el.controls.img.naturalWidth;
+        const ih = $el.controls.img.naturalHeight;
+        const ir = canvas.width / Math.max(iw, ih);
+        ctx.drawImage($el.controls.img, (canvas.width - iw * ir) / 2, (canvas.height - ih * ir) / 2, iw * ir, ih * ir);
+      }
+      tileSize = Math.min(canvas.width, canvas.height);
+      pixels = ctx.getImageData(0, 0, tileSize, tileSize).data;
+    }
+    const gridSize = tileSize + 1;
     
     const terrain = new Float32Array(gridSize * gridSize);
   
     // decode terrain values
     let max = 0;
-    const isCoralReef = /blob|citizens/.test($el.controls.img.src);
-    console.log($el.controls.img.src);
+    const isRGBDEM = inputType === 'img' && $el.controls.img.dataset.type !== 'uint8';
+    console.log('RGB DEM!');
     for (let y = 0; y <= tileSize; y++) {
       for (let x = 0; x <= tileSize; x++) {
+        if (x >= tileSize || y >= tileSize) {
+          terrain[y * gridSize + x] = 100;
+          continue;
+        }
+
         // terrain[y * gridSize + x] = pixels[y * tileSize + x];
-        const i = (y * tileSize + x) * 4;
-        if (x === tileSize || y === tileSize) terrain[y * gridSize + x] = 0;
-        else if (isCoralReef) {
-          terrain[y * gridSize + x] = fn.util.uint8ToElevation(pixels[(x * tileSize + y) * 4], true) * 10;
-          // terrain[y * gridSize + x] = pixels[(x * tileSize + y) * 4] * 10;
-          if (isNaN(terrain[y * gridSize + x])) {
-            console.log(i, fn.util.uint8ToElevation(pixels[(x * tileSize + y) * 4], true))
-            break;
-          }
-          // terrain[y * gridSize + x] = (pixels[y * tileSize + x] / 256) ** 0.5 * 3000;
+        if (inputType === 'pixels') {
+          terrain[y * gridSize + x] = pixels[(y * tileSize) + x];
         } else {
-          const r = pixels[i + 0];
-          const g = pixels[i + 1];
-          const b = pixels[i + 2];
-          terrain[y * gridSize + x] =
-            (r * 256 * 256 + g * 256.0 + b) / 10.0 - 10000.0;
+          const i = (y * tileSize + x) * 4;
+          if (isRGBDEM) {
+            // const r = pixels[i + 0];
+            // const g = pixels[i + 1];
+            // const b = pixels[i + 2];
+            terrain[x * gridSize + y] = fn.util.rgbToElevation(pixels.slice(i, i + 3))
+              // (r * 256 * 256 + g * 256 + b) / 10 - 10000;
+
+              // base = -10000;
+              // precision = 0.1;
+              // base + (r * 256 * 256 + g * 256 + b) * precision;
+              // b = Math.min(256, (elevation - base) / precision);
+              // g = Math.min(256 ** 2, (elevation - base) / precision);
+              // r = Math.min(256 ** 3, (elevation - base) / precision);
+
+              // e = (r * 256 * 256 + g * 256 + b) / 10 - 10000;
+              // (e + 10000) * 10 = r * 256 * 256 + g * 256 + b
+          } else {
+            terrain[y * gridSize + x] = inputType === 'pixels'
+            ? pixels[(x * tileSize + y) * 4]
+            : fn.util.uint8ToElevation(pixels[(x * tileSize + y) * 4], true) * 50;
+            // : fn.util.rgbToElevation(pixels.slice(i, i + 3));
+            // terrain[y * gridSize + x] = (pixels[y * tileSize + x] / 256) ** 0.5 * 3000;
+          }
         }
         max = Math.max(max, terrain[y * gridSize + x]);
       }
+      // console.log(terrain[terrain.length - 1]);
     }
     console.log({ max });
 
@@ -211,9 +364,9 @@ const fn = {
     //     y = tileMesh.vertices[i * 2 + 1];
     //   vertices[i * 3 + 0] = x;
     //   vertices[i * 3 + 1] = y;
-    //   vertices[i * 3 + 2] = terrain[y * 257 + x] / 100;
+    //   vertices[i * 3 + 2] = terrain[y * gridSize + x] / 100;
     //   // this.vertices.push(x);
-    //   // this.vertices.push(terrain[y * 257 + x] / 100);
+    //   // this.vertices.push(terrain[y * gridSize + x] / 100);
     //   // this.vertices.push(y);
     // }
 
@@ -244,7 +397,7 @@ const fn = {
     // console.log(errorCount[0], errorCount.length);
     // throw new Error();
 
-    var meshMartini = new Martini(gridSize).createTile(terrain).getMesh(10);
+    var meshMartini = new Martini(gridSize).createTile(terrain).getMesh(5);
     var martiniGeo = new THREE.BufferGeometry();
     const vertices = [];
     for (let i = 0; i < meshMartini.vertices.length / 2; i++) {
@@ -252,7 +405,7 @@ const fn = {
         y = meshMartini.vertices[i * 2 + 1];
       vertices.push(x);
       vertices.push(y);
-      vertices.push(terrain[y * 257 + x] / 100);
+      vertices.push(terrain[y * gridSize + x] / 100);
     }
     let terrainMaterial = new THREE.MeshNormalMaterial({ flatShading: true, side: THREE.DoubleSide });
     terrainMaterial.needsUpdate = true;
@@ -269,7 +422,7 @@ const fn = {
 
     if (props.three.mesh) props.three.scene.remove(props.three.mesh);
     const mesh = props.three.mesh = new THREE.Mesh(martiniGeo, terrainMaterial);
-    mesh.position.set(-128, -128, 0);
+    mesh.position.set(-tileSize / 2, -tileSize / 2, 0);
     mesh.matrixAutoUpdate = true;
     
     // geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
@@ -302,28 +455,172 @@ const fn = {
   onClick(e) {
     if (!fn.util.lngLatInBounds(e.lngLat)) return;
     const { lng, lat } = e.lngLat;
-    const zoom = 11;
+    const zoom = props.mapbox.tileset.zoom;
     const tile = fn.util.lngLatZoomToTile({ zoom, lng, lat });
     fn.util.tileFromCache(tile)
-    .then((url) => $el.controls.img.src = url)
+    .then((url) => {
+      $el.controls.img.dataset.type = 'uint8';
+      $el.controls.img.src = url;
+    })
   },
   onLoad() {
-    const layer = props.map.getLayer(props.mapbox.layer.elevation);
-    console.log(layer);
-    const elevation = props.map.getSource(layer.source);
-    elevation.simpleId = elevation.id.replace('mapbox://', '');
+    const map = props.map;
+    const elevationLayer = map.getLayer(props.mapbox.layer.elevation);
+    const elevation = map.getSource(elevationLayer.source);
+    props.mapbox.tilesets.gbr100 = {
+      id: elevation.id.replace('mapbox://', ''),
+      zoom: 11,
+    };
+    props.mapbox.tileset = props.mapbox.tilesets.gbr100;
     props.mapbox.source = { elevation };
     
-    props.map.easeTo({
+    map.easeTo({
       zoom: 10,
       bearing: 0,
       pitch: 40,
       duration: 0,
       center: [146.265366, -16.778374] // Milln Reef,
     });
-    // props.features = new Map();
-    // this.queryRenderedFeatures({ layers: [props.mapbox.layerID] }).forEach(feature => props.features.set(feature.id, feature.properties));
-    // fn.onSearch();
+
+    const featureLayer = map.getLayer(props.mapbox.layer.features);
+    map.addLayer({
+      id: props.mapbox.layer.ui,
+      type: 'fill',
+      source: 'composite',
+      'source-layer': featureLayer.sourceLayer,
+      paint: {
+        'fill-color': '#F0F',
+        'fill-opacity': ['case',
+          ['==', ['get', 'id'], ['feature-state', 'hover']],
+          0.5,
+          0
+        ]
+      }
+    }, props.mapbox.layer.features);
+    map.addLayer({
+      id: 'gbr-features-outlines',
+      type: 'line',
+      source: 'composite',
+      'source-layer': featureLayer.sourceLayer,
+      paint: { 'line-color': '#FFF', 'line-dasharray': [2, 2] }
+    }, props.mapbox.layer.features);
+
+    map.on('click', props.mapbox.layer.ui, (e) => {
+      console.log(e.features[0].properties.id);
+      const feature = props.data.features.find(f => f.id === e.features[0].properties.id);
+      console.log(feature.bbox);
+
+      const tilesRect = fn.util.boundsToTilesRect(feature.bbox, true);
+      console.log(fn.util.boundsToTilesRect(tilesRect.bbox, true));
+
+      console.log('rect', tilesRect)
+      if (map.getSource('dummy')) {
+        map.getSource('dummy').setData(turf.bboxPolygon(tilesRect.bbox));
+      } else {
+        map.addSource('dummy', { type: 'geojson', data: turf.bboxPolygon(tilesRect.bbox) });
+        map.addLayer({
+          id: 'dummy',
+          type: 'line',
+          source: 'dummy',
+          paint: {
+            'line-color': 'yellow',
+            'line-opacity': 0.75,
+            'line-width': 5
+          }
+        });
+        props.mapbox.source.dummy = map.getSource('dummy');
+        console.log('dummy', map.getSource('dummy'));
+      }
+      console.log(tilesRect);
+      Promise.all(tilesRect.tiles.list.map(tile => fn.util.tileFromCache(tile)))
+      .then(urls => Promise.all(urls.map(url => new Promise((resolve) => {
+        const img = new Image;
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.src = url;
+      }))))
+      .then((imgs) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.height = 256;
+        const r =  256 / tilesRect.rect.width;
+        const dim = Math.round(256 * r);
+        const offsetX = -Math.round(tilesRect.rect.x * r);
+        const offsetY = -Math.round(tilesRect.rect.y * r);
+        
+        
+        imgs.forEach((img, i) => {
+          const x = (i % tilesRect.tiles.x) * dim + offsetX;
+          const y = Math.floor(i / tilesRect.tiles.x) * dim + offsetY;
+          ctx.drawImage(img, x, y, dim, dim);
+        });
+
+        fn.renderTerrain(canvas, 'canvas');
+      })
+
+      // console.log(tiles);
+      // const wsTile = fn.util.lngLatZoomToTile(bbox[0], bbox[1], 11, true);
+      // const enTile = fn.util.lngLatZoomToTile(bbox[2], bbox[3], 11, true);
+      // const tileCount = {
+      //   x: enTile.tile[1] - wsTile.tile[1] + 1,
+      //   y: wsTile.tile[2] - enTile.tile[2] + 1,
+      // };
+      // const square = {
+      //   x: ws
+      // };
+      // const bboxPixels = [
+      //   wsTile.x, // west
+      //   wsTile.y + tileCount.y * 256, // south
+      //   enTile.x + tileCount.x * 256, // east
+      //   enTile.y, // north
+      // ];
+      // const midpoint = {
+      //   x: (bboxPixels[2] - bboxPixels[0]) / 2,
+      //   y: (bboxPixels[1] - bboxPixels[3]) / 2,
+      // };
+      // midpoint.max = Math.max(midpoint.x, midpoint.y);
+      // const pixels = {
+      //   tiles: [],
+      //   x: bboxPixels[0] + midpoint.x - midpoint.max,
+      //   y: bboxPixels[3] + midpoint.y - midpoint.max,
+      //   dim: midpoint.max * 2,
+      // };
+      // for (let i = 0; i < tileCount.x * tileCount.y; i++) {
+      //   pixels.tiles.push([wsTile.tile[0], wsTile.tile[1] + (i % tileCount.x), enTile.tile[2] + Math.floor(i / tileCount.x)]);
+      // }
+
+      // console.log({ wsTile, enTile, pixels, tileCount ,midpoint });
+
+      // const bboxPixelsSq = turf.square(bboxPixels)
+      // const bboxSq = turf.square(bbox);
+
+      // console.log(bboxPixels, bboxPixelsSq, bboxPixelsSq[2] - bboxPixelsSq[0], bboxPixelsSq[1] - bboxPixelsSq[3]);
+
+      // const bboxSqPoly = turf.bboxPolygon(bboxSq);
+      // const tiles = bboxSqPoly.geometry.coordinates[0].slice(0, 4).reduce((_, lngLat) => {
+      //   // console.log(lngLat) ||
+      //   return fn.util.lngLatZoomToTile(lngLat[0], lngLat[1], 11, true);
+      // }, { list: [], bbox: null });
+
+      // console.log(tiles);
+    });
+
+    map.on('mousemove', props.mapbox.layer.ui, (e) => {
+      const feature = e.features[0];
+      if (props.feature && feature.properties.id === props.feature.properties.id) return;
+      if (props.feature) {
+        map.setFeatureState(props.feature, { hover: false });
+      }
+
+      props.feature = feature;
+      map.setFeatureState(feature, { hover: feature.properties.id });
+    });
+    map.on('mouseleave', props.mapbox.layer.ui, () => {
+      if (props.feature) {
+        map.setFeatureState(props.feature, { hover: false });
+      }
+      props.feature = null;
+    });
   },
   util: {
     tileFromCache(tile) {
@@ -348,15 +645,57 @@ const fn = {
       && lngLat.lat <= lngLat.bounds[3];
     },
     tileToURL(tile) {
-      return `https://api.mapbox.com/v4/${props.mapbox.source.elevation.simpleId}/${tile.join('/')}.webp?access_token=${props.mapbox.token}`;
+      return `https://api.mapbox.com/v4/${props.mapbox.tileset.id}/${tile.join('/')}.webp?access_token=${props.mapbox.token}`;
     },
-    lngLatZoomToTileMB(lng, lat, zoom) {
-      const lngLatZoom = isNaN(lng) ? lng : { lng, lat, zoom };
-      const latR = Math.sin(lngLatZoom.lat * Math.PI / 180);
-      const n = Math.pow(2, lngLatZoom.zoom);
-      const tileX = (n * (lngLatZoom.lng / 360 + 0.5)) % n + (lngLatZoom.lng < 0 ? n : 0);
-      const tileY = n * (0.5 - 0.25 * Math.log((1 + latR) / (1 - latR)) / Math.PI);
-      return [Math.floor(lngLatZoom.zoom), Math.floor(tileX), Math.floor(tileY)];
+    // lngLatZoomToTileMB(lng, lat, zoom) {
+    //   const lngLatZoom = isNaN(lng) ? lng : { lng, lat, zoom };
+    //   const latR = Math.sin(lngLatZoom.lat * Math.PI / 180);
+    //   const n = Math.pow(2, lngLatZoom.zoom);
+    //   const tileX = (n * (lngLatZoom.lng / 360 + 0.5)) % n + (lngLatZoom.lng < 0 ? n : 0);
+    //   const tileY = n * (0.5 - 0.25 * Math.log((1 + latR) / (1 - latR)) / Math.PI);
+    //   return [Math.floor(lngLatZoom.zoom), Math.floor(tileX), Math.floor(tileY)];
+    // },
+    boundsToTilesRect(bounds, getSquare) {
+      // [w, s, e, n]
+      const zoom = props.mapbox.tileset.zoom;
+      const ne = fn.util.lngLatZoomToTile(bounds[2], bounds[3], zoom, true);
+      const sw = fn.util.lngLatZoomToTile(bounds[0], bounds[1], zoom, true);
+      const dim = {
+        x: ne.x - sw.x,
+        y: sw.y - ne.y,
+      };
+      dim.max = Math.max(dim.x, dim.y);
+      const tx = sw.x + (getSquare ? dim.x - dim.max : 0) / 2;
+      const ty = ne.y + (getSquare ? dim.y - dim.max : 0) / 2;
+      const rect = {
+        x: tx % 1,
+        y: ty % 1,
+        width: getSquare ? dim.max : dim.x,
+        height: getSquare ? dim.max : dim.y,
+      };
+      const tiles = {
+        x: Math.ceil(rect.x + rect.width),
+        y: Math.ceil(rect.y + rect.height),
+        list: [],
+      };
+      for (let i = 0; i < tiles.x * tiles.y; i++) {
+        tiles.list.push([zoom, tx - rect.x + (i % tiles.x), ty - rect.y + Math.floor(i / tiles.x)]);
+      }
+
+      console.log({ tx, ty, max: dim.max })
+      
+      return {
+        tiles,
+        rect: Object.keys(rect).reduce((_, k) => ({ ..._, [k]: rect[k] * 256 }), {}),
+        bbox: getSquare
+          ? fn.util.tileBoxToBbox([tx, ty + dim.max, tx + dim.max, ty], zoom)
+          : bounds,
+      };
+    },
+    tileBoxToBbox(tilebox, zoom) {
+      const sw = fn.util.tileToLngLatZoom([zoom].concat(tilebox.slice(0, 2)));
+      const ne = fn.util.tileToLngLatZoom([zoom].concat(tilebox.slice(2)));
+      return [sw.lng, sw.lat, ne.lng, ne.lat];
     },
     tileToLngLatZoom(tile) {
       const zoom = tile[0];
@@ -366,15 +705,51 @@ const fn = {
       const lng = tile[1] / n * 360 - 180;
       return { lng, lat, zoom };
     },
-    lngLatZoomToTile(lng, lat, zoom) {
+    lngLatZoomToTile(lng, lat, zoom, getPoints) {
       const lngLatZoom = isNaN(lng) ? lng : { lng, lat, zoom };
-      console.log(fn.util.lngLatZoomToTileMB(lngLatZoom));
+      // console.log(fn.util.lngLatZoomToTileMB(lngLatZoom));
       const n = Math.pow(2, lngLatZoom.zoom);
-      const tileX = (lngLatZoom.lng + 180) / 360 * n;
-      const tileY = n * 0.5 * (1 - Math.log(
+      const x = (lngLatZoom.lng + 180) / 360 * n;
+      const y = n * 0.5 * (1 - Math.log(
         Math.tan(lngLatZoom.lat * Math.PI / 180)
         + 1 / Math.cos(lngLatZoom.lat * Math.PI / 180)) / Math.PI);
-      return [Math.floor(lngLatZoom.zoom), Math.floor(tileX), Math.floor(tileY)];
+      return getPoints
+      ? { zoom: lngLatZoom.zoom, x, y }
+      : [Math.floor(lngLatZoom.zoom), Math.floor(x), Math.floor(y)];
+      //   tile,
+      //   x: Math.floor((x % 1) * 256),
+      //   y: Math.floor((y % 1) * 256),
+      // } : tile;
+    },
+    elevationToRGB(elevation) {
+      const base = -10000;
+      const precision = 0.1;
+      const normalised = (elevation - base) / precision;
+      const inUint8 = normalised / 256;
+      const flooredInUint8 = Math.floor(inUint8);
+      const flooredInUint8_2 = Math.floor(flooredInUint8 / 256);
+
+      // const r = Math.min(256 ** 3, (elevation - base) / precision);
+      // const g = Math.min(256 ** 2, (elevation - base) / precision);
+      // const b = Math.min(256, (elevation - base) / precision);
+
+      const b = Math.floor((inUint8 - flooredInUint8) * 256);
+      const g = ((flooredInUint8 / 256) - flooredInUint8_2) * 256;
+      const r = ((flooredInUint8_2 / 256) - Math.floor(flooredInUint8_2 / 256)) * 256;
+      return [r, g, b];
+      // base + (r * 256 * 256 + g * 256 + b) * precision;
+      // b = Math.min(256, (elevation - base) / precision);
+      // g = Math.min(256 ** 2, (elevation - base) / precision);
+      // r = Math.min(256 ** 3, (elevation - base) / precision);
+
+      // e = (r * 256 * 256 + g * 256 + b) / 10 - 10000;
+      // (e + 10000) * 10 = r * 256 * 256 + g * 256 + b
+    },
+    rgbToElevation(r, g, b) {
+      const rgb = typeof r === 'object' ? r : [r, g, b];
+      const base = -10000;
+      const precision = 0.1;
+      return (rgb[0] * 256 ** 2 + rgb[1] * 256 + rgb[2]) * precision + base;
     },
     uint8ToElevation(n, normalise) {
       const max = 2430; // max height

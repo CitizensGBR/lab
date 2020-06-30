@@ -84,7 +84,9 @@
       $el.colours.addEventListener('change', fn.onToggle);
 
       Promise.all(Object.keys(props.data).map(key => fetch(props.data[key])
-        .then(e => props.data[key].slice(-3) === 'pbf' ? e.arrayBuffer() : e.json())
+        .then(e => props.data[key].slice(-3) === 'pbf'
+          ? e.arrayBuffer().then(b => geobuf.decode(new Pbf(b)).features) 
+          : e.json())
         .then(data => props.data[key] = data)))
       .then(this.onData);
 
@@ -149,7 +151,6 @@
         gidMap[gid].keysourcereef = true;
       });
 
-      props.data.features = geobuf.decode(new Pbf(props.data.features)).features;
       props.data.features.forEach((feature, index) => {
         feature.properties.search = [feature.properties.name, feature.properties.gid].filter(v => v).join(' ');
         const lat = feature.geometry.coordinates[1];
@@ -306,7 +307,7 @@
         <small>${e.lngLat.lng.toFixed(3)}, ${e.lngLat.lat.toFixed(3)}</small>`;
 
       if (props.feature && !props.popupReef) {
-        const data = props.data.features.find(f => f.properties.id === props.feature.properties.id);
+        const data = props.data.features.find(f => f.id === props.feature.properties.id);
         props.popupReef = new mapboxgl.Popup({
           anchor: 'bottom',
           closeButton: false,
@@ -317,7 +318,7 @@
         const $elPop = document.createElement('div');
         let html = `
         <h3>${props.feature.properties.name || [props.feature.properties.type, props.feature.properties.gid].join(' ')}</h3>
-        <small>${data.properties.zone.map((z, i, l) => z.name + (l.length > 1 && z.km2 ? ` (${Math.floor(100 * z.km2/data.properties.km2)}%)` : '')).join('<br>')}<br>${+props.feature.properties.km2.toFixed(2)}km²</small>
+        <small>${(data.properties.zone || []).map((z, i, l) => z.name + (l.length > 1 && z.km2 ? ` (${Math.floor(100 * z.km2/data.properties.km2)}%)` : '')).join('<br>')}<br>${+props.feature.properties.km2.toFixed(2)}km²</small>
         <small>Modelling: ${data.properties.status}</small><br>
         <small>Monitoring programs: ${(data.properties.survey || ['none']).join(', ')}</small>
         `;
@@ -325,8 +326,6 @@
         $elPop.className = 'popup-hover--content popup-hover--feature meta-item';
         props.popupReef.setDOMContent($elPop);
         props.popupReef.addTo(props.map);
-        console.log(props.feature, data);
-
       } else if (!props.feature && props.popupReef) {
         props.popupReef.remove();
         delete props.popupReef;
