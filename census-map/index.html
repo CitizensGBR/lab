@@ -871,6 +871,9 @@ html, body {
   display: flex !important;
   transition: 0.4s transform;
 }
+.filter:focus-within {
+  outline: none;
+}
 @media (max-width: 55em) {
   .filter:not(:focus-within) {
     transform: translateX(95%);
@@ -899,6 +902,10 @@ html, body {
   padding: 0.6em;
   overflow: auto;
   flex-shrink: 2;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: calc(100% + 0.8em);
+  box-sizing: border-box;
 }
 .filter-items h3 {
   margin: 1em 0 0.4em;
@@ -1246,8 +1253,7 @@ h3 .c-info em {
   border-top: 1px solid #0000001a;
   background: #0000000a;
   margin: 1em -0.6em -0.6em;
-  padding: 1em 0.6em;
-  overflow: hidden;
+  padding: 1em 1.4em 1em 0.6em;
 }
 </style>
 </body>
