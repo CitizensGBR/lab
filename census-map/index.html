@@ -21,7 +21,7 @@
     <input class="search-input" placeholder="Search for a reef or island">
     <ul class="search-results"></ul>
   </div>
-  <aside class="filter" style="display:none">
+  <aside class="filter" style="display:none" tabindex="0">
     <div class="filter-items">
       <header>Data Highlight</header>
 
@@ -869,10 +869,18 @@ html, body {
   max-height: calc(100vh - 8.8em);
   box-sizing: border-box;
   display: flex !important;
+  transition: 0.4s transform;
+}
+@media (max-width: 55em) {
+  .filter:not(:focus-within) {
+    transform: translateX(95%);
+  }
+  .filter:not(:focus-within) * {
+    pointer-events: none;
+  }
 }
 .filter-items {
   width: 100%;
-  margin-top: 2px;
   background: #efefef;
   box-shadow: 0 0.1em 0.1em rgba(0,0,0,0.1);
   box-sizing: border-box;
@@ -889,6 +897,8 @@ html, body {
 }
 .filter-items--content {
   padding: 0.6em;
+  overflow: auto;
+  flex-shrink: 2;
 }
 .filter-items h3 {
   margin: 1em 0 0.4em;
@@ -915,7 +925,7 @@ html, body {
   flex-direction: column;
   overflow: auto;
 }
-@media (max-height: 75em) {
+@media (max-height: 75em) and (min-width: 55em) {
   .filter[data-filtered] {
     z-index: 0;
   }
@@ -996,6 +1006,12 @@ html, body {
   left: 0;
   top: 0;
   margin: 1em;
+  transition: 0.4s transform;
+}
+@media (max-width: 55em) {
+  .search {
+    font-size: 0.8em;
+  }
 }
 .search-input {
   padding: 0.6em 0.4em;
@@ -1231,6 +1247,7 @@ h3 .c-info em {
   background: #0000000a;
   margin: 1em -0.6em -0.6em;
   padding: 1em 0.6em;
+  overflow: hidden;
 }
 </style>
 </body>
