@@ -91,6 +91,7 @@
   const $el = {
     search: document.querySelector('.search-input'),
     searchResults: document.querySelector('.search-results'),
+    filter: document.querySelector('.filter'),
     filters: [ ...document.querySelectorAll('.filter-item') ],
     ranges: [ ...document.querySelectorAll('.filter-range') ],
     colours: document.querySelector('.filter-colours'),
@@ -300,10 +301,10 @@
           if (!Object.keys(filters).length && Object.keys(ranges).length) {
             matches.push({
               colour: ['A', 'A', '0'],
-              title: 'Analysis',
+              title: 'Reef importance analysis filter',
               key: undefined,
               type: 'analysis',
-              value: ['analysis'],
+              value: ['analysis filter'],
             });
           }
           if (filters.status && item.status) {
@@ -363,8 +364,10 @@
       const filteredKeys = Object.keys(filtered.filter);
       if (filteredKeys.length) {
         $el.colours.parentElement.dataset.filtered = '';
+        $el.filter.dataset.filtered = '';
       } else {
         delete $el.colours.parentElement.dataset.filtered; 
+        delete $el.filter.dataset.filtered;
       }
 
 
@@ -702,7 +705,7 @@
           }
         });
 
-        history.replaceState(null, '', hash.length ? '#' + hash.join('|') : '/');
+        history.replaceState(null, '', location.pathname + (hash.length ? '#' + hash.join('|') : ''));
       },
       getState() {
         if (!location.hash) return;
@@ -911,6 +914,21 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: auto;
+}
+@media (max-height: 75em) {
+  .filter[data-filtered] {
+    z-index: 0;
+  }
+  .filter-colours-key {
+    position: absolute;
+    width: 100%;
+    max-height: 100%;
+    z-index: -1;
+    transition: 0.4s transform;
+  }
+  .filter-colours-key[data-filtered] {
+    transform: translateX(-100%);
+  }
 }
 .filter-colours-key:not([data-filtered]) header {
   display: none;
