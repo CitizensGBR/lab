@@ -4,10 +4,12 @@
 <head>
   <meta charset="utf-8">
   <title>Great Reef Census: Reefs</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.0/mapbox-gl.js"></script>
   <script src="https://unpkg.com/pbf@3.0.5/dist/pbf.js"></script>
   <script src="https://unpkg.com/geobuf@3.0.1/dist/geobuf.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.0/nouislider.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.0/nouislider.min.js"></script>
 </head>
 <body>
 <div class="map">
@@ -19,7 +21,7 @@
     <input class="search-input" placeholder="Search for a reef or island">
     <ul class="search-results"></ul>
   </div>
-  <aside class="filter">
+  <aside class="filter" style="display:none">
     <div class="filter-items">
       <header>Data Highlight</header>
 
@@ -30,7 +32,7 @@
         <label><input class="filter-item" data-type="status" data-value="ld" data-title="Low Disturbance" data-colour="#04B" type="checkbox"><strong>LD</strong> <u>L</u>ow risk of <u>d</u>isturbance</label>
         <label><input class="filter-item" data-type="status" data-value="hr" data-title="High Recovery" data-colour="#0B5" type="checkbox"><strong>HR</strong> <u>H</u>igh <u>r</u>ecovery potential</label>
         <label><input class="filter-item" data-type="status" data-value="lr" data-title="Low Recovery" data-colour="#F60" type="checkbox"><strong>LR</strong> <u>L</u>ow <u>r</u>ecovery potential</label>
-​
+
         <h4>Monitoring</h4>
         <label><input class="filter-item" data-type="survey" data-key="Un" data-title="Unsurveyed" data-colour="#CAC" type="checkbox"><strong><u>Un</u></strong>surveyed (targeted)</label>
         <label><input class="filter-item" data-type="survey" data-key="Mo" data-title="Monitored" data-value="aims|mmp|bzgz" data-colour="#0AC" type="checkbox"><strong><u>Mo</u></strong>nitored (LTMP, MMP, BZGZ)</label>
@@ -38,10 +40,44 @@
 
         <h3>Other identified reefs</h3>
         <label><input class="filter-item" data-type="attr" data-key="Key" data-value="keysourcereef" data-title="Key Source Reef" data-colour="#50F" type="checkbox"><strong><u>Key</u></strong> Source Reefs</label>
+
+        <section id="filter-analysis">
+
+          <h3>Reef Importance Analysis <abbr tabindex="0" class="c-info"><em>Reefs are evaluated and scored by total larval enrichment potential versus 'neediness' of neighbouring reefs. A second component of the score simplifies connectivity considerations, counting only the number of connected 'needy' reefs (&lt; 20% coral cover). Combined scores are generated on both a reef-wide and per-sector scale. Source: Pete Mumby</em></abbr></h3>
+
+
+          <h4 class="label">Score per sector <abbr tabindex="0" class="c-info"><em>Scores for each reef are scaled and applied per AIMS sector</em></abbr></h4>
+          
+          <span class="label"><strong>Importance</strong> <abbr tabindex="0" class="c-info"><em>The sum of larval enhancement (implicitly counting the number of connected reefs), and number of reefs in need.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="i" data-min="0" data-max="2" data-type="importance_sector"></div>
+          
+          <span class="label"><strong>Importance (10% classes)</strong> <abbr tabindex="0" class="c-info"><em>Importance scores in each sector sorted in equal-sized chunks, where a score of 1 is in the bottom 10% of values in the sector and a score of 10 is in the top 10% of values.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="i10" data-type="importance_10_sector" data-step="1" data-min="1" data-max="10" data-format="i"></div>
+
+          <span class="label"><strong>Larval enrichment</strong> <abbr tabindex="0" class="c-info"><em>Examines the contribution of each reef to the supply of other reefs in need.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="e" data-type="enrichment_sector"></div>
+
+          <span class="label"><strong>Connectivity</strong> <abbr tabindex="0" class="c-info"><em>The second component of the score examines how many 'needy' reefs (&lt; 20% coral cover) are served by each reef</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="c" data-type="reefs_supplied_sector"></div>
+
+          <h4 class="label">GBR score <abbr tabindex="0" class="c-info"><em>Scores for each reef at whole-of-reef scale</em></abbr></h4>
+
+          <span class="label"><strong>Overall importance score</strong> <abbr tabindex="0" class="c-info"><em>Final metric applied (0-2) without prioritisation for individual sectors. While this predicts the best of the GBR overall, it may neglect reefs that are locally important but not significant at whole-of-reef scale.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="s" data-min="0" data-max="2" data-type="score"></div>
+
+          <h4 class="label">Other metrics</h4>
+
+          <span class="label"><strong>AIMS sector</strong> <output></output><output></output></span>
+          <div class="filter-range" data-key="a" data-type="aims_sector" data-step="1" data-min="1" data-max="11" data-format="i"></div>
+
+          <span class="label"><strong>Predicted coral cover</strong> <abbr tabindex="0" class="c-info"><em>Source: ReefMod (UQ) Yves-Marie Bozec & Pete Mumby</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="p" data-type="coral_cover_2020" data-format="p"></div>
+
+        </section>
       </div>
 
       <div class="filter-colours-key">
-        <header>Data Filter and Colour Key</header>
+        <header>Data Filter and Colour Key <button class="reset-colours">Reset colours</button></header>
         <div class="filter-colours"></div>
       </div>
     </div>
@@ -56,14 +92,18 @@
     search: document.querySelector('.search-input'),
     searchResults: document.querySelector('.search-results'),
     filters: [ ...document.querySelectorAll('.filter-item') ],
+    ranges: [ ...document.querySelectorAll('.filter-range') ],
     colours: document.querySelector('.filter-colours'),
+    coloursReset: document.querySelector('.reset-colours'),
     depth: document.querySelector('.meta-depth'),
   };
   const props = {
+    colours: {},
     toggled: {},
     data: {
       gbrmpa: 'gbrmpa-reefs.json',
       keysourcereefs: 'source-reefs.json',
+      priorityreefs: 'priority-reefs.csv',
       features: 'GBR-Features-points.pbf',
     },
     mapbox: {
@@ -78,17 +118,69 @@
   };
   const fn = {
     init() {
+      const updateFilter = fn.util.debounce(fn.onFilter, 500);
+      const renderFilter = fn.util.debounce(fn.renderFilter, 500);
+
       $el.search.addEventListener('input', this.onSearch);
       $el.searchResults.addEventListener('click', this.onSearchResult);
       $el.filters.forEach($el => $el.addEventListener('change', this.onFilter));
-      $el.colours.addEventListener('change', fn.onToggle);
+      $el.colours.addEventListener('input', fn.util.throttle(fn.onToggle, 100));
+      $el.coloursReset.addEventListener('click', (e) => {
+        props.colours = {};
+        try {
+          delete localStorage.colours;
+        } catch(e) {}
+        delete e.target.parentElement.parentElement.dataset.colourised;
+        fn.onFilter();
+      });
 
       Promise.all(Object.keys(props.data).map(key => fetch(props.data[key])
-        .then(e => props.data[key].slice(-3) === 'pbf'
-          ? e.arrayBuffer().then(b => geobuf.decode(new Pbf(b)).features) 
-          : e.json())
+        .then((e) => {
+          const ext = props.data[key].replace(/^.*\.([^.]+)$/, '$1');
+          if (ext === 'pbf') {
+            return e.arrayBuffer().then(b =>
+              geobuf.decode(new Pbf(b)).features);
+          }
+          if (ext === 'json') return e.json();
+          // simple csv parse
+          return e.text().then(csv =>
+            csv.split('\r\n').reduce((_, row, i) =>
+              row.split(',').reduce((__, cell, ii) => {
+                if (!i) __.cols.push(cell);
+                else {
+                  if (__.list.length < i) __.list.push({});
+                  __.list[i - 1][__.cols[ii]] = isNaN(cell) ? cell : +cell;
+                }
+                return __
+              }, _), { cols: [], list: [] }).list);
+        })
         .then(data => props.data[key] = data)))
       .then(this.onData);
+
+      $el.ranges.forEach(($el) => {
+        const format = $el.dataset.format || 'n';
+        const min = +$el.dataset.min || 0;
+        const max = +$el.dataset.max || 1;
+        $el.dataset.min = min;
+        $el.dataset.max = format === 'p' ? 100 : max;
+        noUiSlider.create($el, {
+          start: $el.dataset.start ? $el.dataset.start.split(',').map(n => +n) : [min, (format === 'p' ? 100 : max)],
+          connect: true,
+          tooltips: true,
+          format: (() => {
+            if (format === 'i') return { to: n => Math.round(n), from: n => +n };
+            if (format === 'p') return { to: n => `${Math.round(n * 100)}%`, from: n => +n / 100 };
+          })() || null,
+          step: +$el.dataset.step || null,
+          range: { min, max },
+        });
+
+        const outputs = $el.previousElementSibling.querySelectorAll('output');
+        if (outputs.length) {
+          $el.noUiSlider.on('update', (values, handle) => outputs[handle].innerHTML = values[handle]);
+          $el.noUiSlider.on('change', updateFilter);
+        }
+      });
 
       mapboxgl.accessToken = props.mapbox.token;
       const map = props.map = new mapboxgl.Map({
@@ -106,7 +198,6 @@
 
       map.on('click', () => delete $el.search.dataset.focus);
 
-      const renderFilter = fn.util.debounce(fn.renderFilter, 500);
       map.on('move', renderFilter);
       map.on('sourcedata', renderFilter);
     
@@ -146,25 +237,42 @@
         }
       });
 
+      const missing = [];
+      props.data.priorityreefs.forEach((item) => {
+        if (!gidMap[item.gid]) {
+          missing.push(item.gid);
+          gidMap[item.gid] = {};
+        }
+        gidMap[item.gid].priorityreef = true;
+        Object.assign(gidMap[item.gid], item);
+      });
+
       props.data.keysourcereefs.forEach((gid) => {
         if (!gidMap[gid]) gidMap[gid] = {};
         gidMap[gid].keysourcereef = true;
       });
 
       props.data.features.forEach((feature, index) => {
+        if (!feature.properties.gid) console.log(feature.properties);
         feature.properties.search = [feature.properties.name, feature.properties.gid].filter(v => v).join(' ');
         const lat = feature.geometry.coordinates[1];
         feature.properties.sector = (lat < -14.9 && 'Central') || (lat < -20.5 && 'Southern') || 'Northern';
         feature.properties.index = index;
+        const missing_i = missing.indexOf(feature.properties.gid);
+        if (missing_i >= 0) missing.splice(missing_i, 1);
         if (gidMap[feature.properties.gid]) {
           Object.assign(feature.properties, gidMap[feature.properties.gid], feature.properties);
         }
       });
+
+      console.log('missing priority:', missing);
+
+
       fn.onSearch();
     },
     onFilter() {
-      const filters = fn.util.getFilters();
-      console.log(filters);
+      const filters = props.filters = fn.util.getFilters();
+      const ranges = props.ranges = fn.util.getRanges();
 
       // const itemtest = { value: }
       // filters.survey.forEach(survey =>
@@ -172,31 +280,52 @@
       //         ? itemtest.value && survey.value.find(v => itemtest.value.toLowerCase().indexOf(v) === 0)
       //         : !itemtest.survey) && matches.push(survey));
 
+      // coral_cover_2020,karlo_shelf,aims_sector,score,enhancement_sector,reefs_supplied_sector,importance_sector,importance_10_sector
+
       const filtered = props.filtered = { gid: {}, filter: {} };
-      props.data.features.forEach((feature) => {
+      props.data.features.forEach((feature, i) => {
+
         const item = feature.properties;
-        if (!item.gbrmpa && !item.keysourcereef) return;
+        if (!item.gbrmpa && !item.keysourcereef && !item.priorityreef) return;
+
+        const isInvalid = Object.keys(ranges).find((type) => {
+          return feature.properties.hasOwnProperty(type) && (feature.properties[type] < ranges[type].value[0]
+          || feature.properties[type] > ranges[type].value[1]);
+        });
+
+
 
         const matches = [];
-        if (filters.status && item.status) {
-          filters.status.forEach(status =>
-            item.status.toLowerCase().indexOf(status.value) >= 0 && matches.push(status));
-        }
-        if (filters.survey) {
-          filters.survey.forEach(survey =>
-            (survey.value
-              ? item.survey && survey.value.find(v => item.survey.find(s => s.indexOf(v) === 0))
-              : !item.survey) && matches.push(survey));
-        }
-        if (filters.attr) {
-          filters.attr.forEach(attr =>
-            item[attr.value] && matches.push(attr));
+        if (!isInvalid) {
+          if (!Object.keys(filters).length && Object.keys(ranges).length) {
+            matches.push({
+              colour: ['A', 'A', '0'],
+              title: 'Analysis',
+              key: undefined,
+              type: 'analysis',
+              value: ['analysis'],
+            });
+          }
+          if (filters.status && item.status) {
+            filters.status.forEach(status =>
+              item.status.toLowerCase().indexOf(status.value) >= 0 && matches.push(status));
+          }
+          if (filters.survey) {
+            filters.survey.forEach(survey =>
+              (survey.value
+                ? item.survey && survey.value.find(v => item.survey.find(s => s.indexOf(v) === 0))
+                : !item.survey) && matches.push(survey));
+          }
+          if (filters.attr) {
+            filters.attr.forEach(attr =>
+              item[attr.value] && matches.push(attr));
+          }
         }
 
         if (matches.length) {
 
           const key = matches.reduce((_, m) => _ + (m.key || m.value), '').toLowerCase();
-          if (!filtered.filter[key]) {
+          if (!filtered.filter[key] ) {
             const label = matches.reduce((_, m, i) => {
               const l = m.key || [].concat(m.value).join('').toUpperCase();
               if(_.type !== m.type) {
@@ -208,13 +337,15 @@
               return _;
             }, { list: [] }).list.join(' / ');
 
+            const colour = props.colours[key] || matches.reduce((_, m) =>
+                m.colour.map((c, i) => _[i] + parseInt(c, 16)), [0, 0, 0])
+              .reduce((_, c) => _ + (c % 16).toString(16), '#')
             filtered.filter[key] = {
               key,
               label,
               list: [],
-              colour: matches.reduce((_, m) =>
-                m.colour.map((c, i) => _[i] + parseInt(c, 16)), [0, 0, 0])
-              .reduce((_, c) => _ + (c % 16).toString(16), '#'),
+              colour,
+              colourFull: colour.length > 4 ? colour : colour.replace(/([a-f0-9])/gi, '$1$1'),
             }
           }
           filtered.active = true;
@@ -236,20 +367,31 @@
         delete $el.colours.parentElement.dataset.filtered; 
       }
 
+
       $el.colours.innerHTML = filteredKeys.map(key =>
         `<div class="filter-colours--item" style="background:${filtered.filter[key].colour}" ${props.toggled[key] ? 'data-toggled' : ''}>
-          <label><input data-key="${key}" type="checkbox" ${props.toggled[key] ? '' : 'checked'}><strong>${filtered.filter[key].label}</strong><span>(${filtered.filter[key].list.length})</span></label>
+          <label><input data-key="${key}" type="checkbox" ${props.toggled[key] ? '' : 'checked'}><strong>${filtered.filter[key].label}</strong><span>(${filtered.filter[key].list.length})</span></label><input data-key="${key}" type="color" value="${filtered.filter[key].colourFull}">
         </div>`).join('');
 
       fn.renderFilter();
+      fn.util.updateState();
     },
     onToggle(e) {
-      props.toggled[e.target.dataset.key] = !e.target.checked || null;
-      if (e.target.checked) {
-        delete e.target.parentElement.parentElement.dataset.toggled;
-      } else {
-        e.target.parentElement.parentElement.dataset.toggled = '';
+      if (e.target.type === 'color') {
+        const key = e.target.dataset.key;
+        e.target.parentElement.style.background = e.target.value;
+        e.target.parentElement.parentElement.parentElement.dataset.colourised = '';
+        props.colours[key] = e.target.value;
+        props.filtered.filter[key].colour = props.filtered.filter[key].colourFull = e.target.value;
+      } else {      
+        props.toggled[e.target.dataset.key] = !e.target.checked || null;
+        if (e.target.checked) {
+          delete e.target.parentElement.parentElement.dataset.toggled;
+        } else {
+          e.target.parentElement.parentElement.dataset.toggled = '';
+        }
       }
+      fn.util.updateState();
       fn.renderFilter();
     },
     renderFilter() {
@@ -320,7 +462,12 @@
         <h3>${props.feature.properties.name || [props.feature.properties.type, props.feature.properties.gid].join(' ')}</h3>
         <small>${(data.properties.zone || []).map((z, i, l) => z.name + (l.length > 1 && z.km2 ? ` (${Math.floor(100 * z.km2/data.properties.km2)}%)` : '')).join('<br>')}<br>${+props.feature.properties.km2.toFixed(2)}km²</small>
         <small>Modelling: ${data.properties.status}</small><br>
-        <small>Monitoring programs: ${(data.properties.survey || ['none']).join(', ')}</small>
+        <small>Monitoring programs: ${(data.properties.survey || ['none']).join(', ')}</small><br>
+        <hr>
+        <strong><small>Importance: ${data.properties.importance_sector.toFixed(2)} (top ${110 - data.properties.importance_10_sector * 10}% in sector ${data.properties.aims_sector})</small></strong>
+        <small>Predicted coral cover: ${data.properties.coral_cover_2020.toFixed(1)}%</small><br>
+        <small>Enrichment/connectivity score: ${data.properties.enrichment_sector.toFixed(2)}/${data.properties.reefs_supplied_sector.toFixed(2)}</small><br>
+        <small>GBR score: ${data.properties.score.toFixed(2)}</small>
         `;
         $elPop.innerHTML = html;
         $elPop.className = 'popup-hover--content popup-hover--feature meta-item';
@@ -338,8 +485,6 @@
     onDepth(e) {
       const depth = e && e.features[0].properties.z * -1;
       $el.depth.innerHTML = isNaN(depth) ? '' : (depth === 100 && '>100') || depth;
-
-
     },
     onLoad() {
       props.map.easeTo({
@@ -401,7 +546,6 @@
         const feature = e.features[0];
         const state = map.getFeatureState(feature);
         const reset = state && state.selected === feature.properties.id;
-        console.log(state.selected, feature.properties.id)
         map.setFeatureState(feature, { selected: reset ? null : feature.properties.id });
       });
 
@@ -480,6 +624,7 @@
       // props.data.features = new Map();
       // this.queryRenderedFeatures({ layers: [props.mapbox.layerID] }).forEach(feature => props.data.features.set(feature.id, feature.properties));
       // fn.onSearch();
+      fn.util.getState();
       fn.onFilter();
     },
     onSearch() {
@@ -521,6 +666,85 @@
       });
     },
     util: {
+      updateState() {
+        const hash = [];
+        const hashMap = {};
+        $el.filters.forEach((filter) => {
+          if (filter.checked) {
+            const key = (filter.dataset.key || filter.dataset.value).toLowerCase();
+            hashMap[key] = hash.length;
+            hash.push(key);
+          }
+        });
+        Object.keys(props.colours).forEach((key) => {
+          const val = props.colours[key];
+          if (hashMap.hasOwnProperty(key)) hash[hashMap[key]] += `:${val}`;
+          else {
+            hashMap[key] = hash.length;
+            hash.push(`_${key}:${val}`);
+          }
+        });
+        $el.ranges.forEach((range) => {
+          const values = range.noUiSlider.get().map(v =>
+            isNaN(v) ? +v.replace('%', '') : +v);
+          if (range.dataset.min != values[0] || range.dataset.max != values[1]) {
+            hash.push(`${range.dataset.key}:${values.join(',')}`);
+          }
+        });
+        [ ...$el.colours.querySelectorAll('input[type="checkbox"]:not(:checked)')]
+        .forEach((colour) => {
+          const key = colour.dataset.key;
+          if (hashMap.hasOwnProperty(key)) {
+            hash[hashMap[key]] = '!' + hash[hashMap[key]];
+          } else {
+            hashMap[key] = hash.length;
+            hash.push(`!_${key}`);
+          }
+        });
+
+        history.replaceState(null, '', hash.length ? '#' + hash.join('|') : '/');
+      },
+      getState() {
+        if (!location.hash) return;
+        const hash = location.hash.slice(1);
+        props.state = hash.split('|').reduce((_, param) => {
+          const split = param.split(':');
+          const key = split[0].replace(/[!_]/g, '');
+          const value = split[1];
+          if (key) {
+            _[key] = split[1] || true;
+            if (param.charAt(0) === '!') {
+              _[key].visible = false;
+              props.toggled[key] = true;
+            }
+            if (value && value.charAt(0) === '#') props.colours[key] = value;
+          }
+          return _;
+        }, {});
+        $el.filters.forEach((filter) => {
+          const key = (filter.dataset.key || filter.dataset.value).toLowerCase();
+          if (props.state[key]) filter.checked = true;
+        });
+        $el.ranges.forEach((range) => {
+          const key = range.dataset.key;
+          if (props.state[key]) range.noUiSlider.set(props.state[key].split(','));
+        });
+      },
+      colours(key, colour) {
+        if (!props.colours) {
+          try {
+            props.colours = JSON.parse(localStorage.colours) || {};
+          } catch (e) {}
+          if (!props.colours) props.colours = {};
+          else $el.coloursReset.parentElement.parentElement.dataset.colourised = '';
+        }
+        if (!colour) return key ? props.colours[key] : props.colours;
+
+        props.colours[key] = colour;
+        try {
+          localStorage.colours = JSON.stringify(props.colours);
+        } catch (e) {}
+      },
       debounce(fn, delay) {
         let debounced;
         return (...args) => {
@@ -560,7 +784,21 @@
               colour: (filter.dataset.colour || '').slice(1).split(''),
             });
           }
-          return _
+          return _;
+        }, {});
+      },
+      getRanges() {
+        return $el.ranges.reduce((_, range) => {
+          const value = range.noUiSlider.get().map(v => isNaN(v) ? +v.replace('%', '') : +v);
+          const changed = range.dataset.min != value[0] || range.dataset.max != value[1];
+          if (changed) {
+            _[range.dataset.type] = {
+              title: range.dataset.title,
+              type: range.dataset.type,
+              value,
+            };
+          }
+          return _;
         }, {});
       },
       search: {
@@ -627,7 +865,7 @@ html, body {
   margin: 1em;
   max-height: calc(100vh - 8.8em);
   box-sizing: border-box;
-  display: flex;
+  display: flex !important;
 }
 .filter-items {
   width: 100%;
@@ -657,10 +895,14 @@ html, body {
   margin-top: 0;
 }
 .filter-items h4 {
-  margin: 0.75em 0 0.4em;
+  margin: 1.25em 0 0.5em;
   font-size:  0.9em;
 }
-.filter-items label {
+.filter-items h3 + h4 {
+  margin-top: 0.75em;
+}
+.filter-items label,
+.filter-items .label {
   display: block;
   font-size:  0.8em;
 }
@@ -673,6 +915,19 @@ html, body {
 .filter-colours-key:not([data-filtered]) header {
   display: none;
 }
+.filter-colours-key header button {
+  border: none;
+  background: no-repeat;
+  color: white;
+  font: inherit;
+  font-size: 0.75em;
+  border-bottom: 1px dotted;
+  padding: 0;
+  margin-left: 1em;
+}
+.filter-colours-key:not([data-colourised]) header button {
+  display: none;
+}
 .filter-colours {
   overflow: auto;
   flex-shrink: 1;
@@ -681,6 +936,7 @@ html, body {
 }
 .filter-colours--item {
   padding:  0.6em;
+  position: relative;
 }
 .filter-colours--item[data-toggled] {
   order: 1;
@@ -689,6 +945,20 @@ html, body {
 .filter-colours--item label {
   background: #fffd;
   line-height: 1.4em;
+}
+.filter-colours--item input[type="color"] {
+  position: absolute;
+  top: 0.75em;
+  right: 0.75em;
+  padding: 0;
+  border: none;
+  height: 1.9em;
+  outline: none;
+  width: 2em;
+  box-shadow: 0 0 0 1px white;
+}
+.filter-colours--item[data-toggled] input[type="color"] {
+  pointer-events: none;
 }
 .filter-colours--item strong {
   font-weight: 600;
@@ -840,6 +1110,109 @@ html, body {
 }
 .logo:hover::before {
   transform: scaleX(1);
+}
+.noUi-target {
+  height: 0.5em;
+  margin: 0.4em 0 0.75em;
+}
+.noUi-target .noUi-handle {
+  width:  0.8em;
+  height:  0.8em;
+  top: -0.2em;
+  right: -0.4em;
+}
+.noUi-handle::before,
+.noUi-handle::after {
+  height: 60%;
+  left: 40%;
+  transform:  translateX(-50%);
+  top:  20%;
+  background: #D9D9D9;
+}
+.noUi-handle::after {
+  left: 60%;
+}
+.noUi-tooltip {
+  font-size:  0.65em;
+  padding:  4px;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 0.2s;
+  transition-property: opacity, visibility;
+}
+.noUi-target:focus-within .noUi-tooltip {
+  display: block;
+  visibility: visible;
+  pointer-events: all;
+  opacity: 1;
+}
+.noUi-connect {
+  background: #009dff;
+}
+.label output {
+  font-size: 0.8em;
+  font-weight: 300;
+}
+.label output::after {
+  content: '-';
+}
+.label output:first-of-type::before {
+  content: '(';
+}
+.label output:last-of-type::after {
+  content: ')';
+}
+.c-info {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  width: 1em;
+  height: 1em;
+  font-weight: 300;
+  font-size: 0.8rem;
+}
+.c-info:focus {
+  outline: none;
+}
+.c-info::before {
+  content: "\24D8";
+  font-size: 0.85em;
+}
+.c-info em {
+  position: absolute;
+  left: 50%;
+  color: #fff;
+  background: #222;
+  font-style: normal;
+  top: -0.2em;
+  transform: translate(-50%, -100%);
+  transition-duration: 0.2s;
+  transition-property: opacity, transform, visibility;
+  width: 16em;
+  display: inline-block;
+  text-align: center;
+  font-size: 0.65rem;
+  padding: 0.5em;
+  box-shadow: 0.1em 0.1em 0.1em #0000001a;
+  z-index: 1;
+  opacity: 0;
+  visibility: hidden;
+  line-height: 1.5;
+  font-weight: 300;
+}
+h3 .c-info em {
+  transform: translate(-75%, -100%);
+}
+.c-info:focus em {
+  opacity: 1;
+  visibility: visible;
+}
+#filter-analysis {
+  border-top: 1px solid #0000001a;
+  background: #0000000a;
+  margin: 1em -0.6em -0.6em;
+  padding: 1em 0.6em;
 }
 </style>
 </body>
