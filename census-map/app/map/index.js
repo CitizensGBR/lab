@@ -7,7 +7,7 @@ import { debounce } from '../util/wait.js';
 import { load } from '../util/template.js';
 import filterKey from '../controls/filter/key.js';
 import Reefs from './features/reefs.js';
-import Itineraries from './features/Itineraries.js';
+import Itineraries from './features/itineraries.js';
 
 let map;
 let ready;
