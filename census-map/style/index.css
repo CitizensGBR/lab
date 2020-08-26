@@ -1,0 +1,26 @@
+@import 'logo.css';
+@import 'map.css';
+@import 'nav.css';
+@import 'nav/itineraries.css';
+@import 'search.css';
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: sans-serif;
+  font-weight: 300;
+}
+
+/* UTILS */
+.hidden {
+  border-width: 0;
+  clip-path: inset(50%);
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

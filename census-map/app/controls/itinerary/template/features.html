@@ -1,0 +1,11 @@
+<% features.forEach((feature, ii) => { %>
+  <li style="order:${(ii + 2) * 3}" data-index="${ii}">
+    <label data-gid="${feature.properties.gid}" data-index="${ii}" draggable="true">
+      <span>${[].concat(feature.properties.name || [], feature.properties.gid).join(' ')}</span>
+    <% if (feature.properties.importance_sector) { %>
+      <br><small>${feature.properties.importance_sector.toFixed(2)} / ▲${110 - feature.properties.importance_10_sector * 10}% (Sector ${feature.properties.aims_sector})</small>
+    <% } %>
+    </label>
+    <button data-action="remove-feature" data-index="${ii}">&times;</button>
+  </li>
+<% }) %>

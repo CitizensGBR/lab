@@ -1,0 +1,99 @@
+.map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+#map {
+  width: 100%;
+  height: 100%;
+}
+.meta-item {
+  line-height: 1em;
+}
+.meta-item strong {
+  display: block;
+  margin-bottom: 0.2em;
+}
+
+.popup-hover {
+  pointer-events: none;
+}
+.popup-hover .mapboxgl-popup-content {
+  overflow: hidden;
+}
+.popup-hover .mapboxgl-popup-tip {
+  display: none;
+}
+.popup-hover--feature {
+
+}
+.popup-hover--content {
+  text-align: center;
+  margin-top:  0.4em;
+  min-width: 7.5em;
+}
+.popup-hover--content:not(.popup-hover--feature) {
+  background: #222;
+  box-shadow: 0 0 0 2em #222;
+  color:  #fff;
+}
+.popup-hover--content h3 {
+  font-size: 1.25em;
+  display: block;
+  margin: 0 0 0.4em;
+  font-weight: 300;
+}
+.popup-hover--content h3 + small {
+  /* line-height: 2em; */
+  display: block;
+  margin-bottom:  1em;
+}
+.meta {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 1em;
+}
+@media (max-width: 37.5rem) {
+  .meta {
+    top: auto;
+    bottom: 2em;
+  }
+}
+.meta-depth {
+  font-weight: 300;
+  margin: 0;
+  min-width: 1.7em;
+  padding-right: 0.9em;
+  text-align: right;
+}
+.meta-depth:empty {
+  display: none;
+}
+.meta-depth::before {
+  content: 'Depth:';
+  position: absolute;
+  transform: translateX(-100%);
+  left: 0;
+}
+.meta-depth::after {
+  content: 'm';
+  position: absolute;
+  right: 0;
+}
+.mapboxgl-marker svg > g > g:first-child {
+  opacity: 0.4;
+}
+
+.mapboxgl-ctrl-scale {
+  border: none;
+  border-left: 2px solid #0002;
+  background-color: #0002;
+  color: #fff;
+  padding: 0.4em 1em;
+  font-size: 0.8em;
+  font-weight: 500;
+  text-shadow: 1px 1px 1px #0005;
+}

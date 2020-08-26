@@ -1,0 +1,19 @@
+<div class="popup-hover--content popup-hover--feature meta-item">
+  <h3>${[(reef.name || reef.type), reef.gid].join(' ')}</h3>
+  <small>
+  <% (reef.zone || []).map((zone, i, list) => { %>
+    ${zone.name}
+    <% if (list.length > 1 && zone.km2) { %>
+      (${Math.floor(100 * zone.km2/reef.km2)}%)
+    <% } %>
+    <br>
+  <% }) %>
+  ${+reef.km2.toFixed(2)}km²</small>
+  <small>Modelling: ${reef.status}</small><br>
+  <small>Monitoring programs: ${(reef.survey || ['none']).join(', ')}</small><br>
+  <hr>
+  <strong><small>Importance: ${reef.importance_sector.toFixed(2)} (top ${110 - reef.importance_10_sector * 10}% in sector ${reef.aims_sector})</small></strong>
+  <small>Predicted coral cover: ${reef.coral_cover_2020.toFixed(1)}%</small><br>
+  <small>Enrichment/connectivity score: ${reef.enrichment_sector.toFixed(2)}/${reef.reefs_supplied_sector.toFixed(2)}</small><br>
+  <small>GBR score: ${reef.score.toFixed(2)}</small>
+</div>

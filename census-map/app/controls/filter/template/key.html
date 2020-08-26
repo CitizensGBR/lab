@@ -1,0 +1,12 @@
+<% if (selected) { %>
+  <div class="filter-colours--item" style="background:#F0F;border: 2px dotted #FFFA">
+    <label><input data-key="selected" type="checkbox" checked><strong>Selected</strong><span>(${selected.length})</span> <button data-action="itinerary">${itinerary ? 'Add to' : 'Create'} itinerary</button></label>
+  </div>
+<% } %>
+<% (filtered ? filtered.keys : []).map(key => { %>
+  <div <% if (filtered.filter[key].toggle) {%>data-toggled<% } %>
+  class="filter-colours--item"
+  style="background:${filtered.filter[key].colour}">
+    <label><input data-key="${key}" type="checkbox" <% if (!filtered.filter[key].toggle) {%>checked<% } %>><strong>${filtered.filter[key].label}</strong><span>(${filtered.filter[key].list.length})</span></label><input data-key="${key}" type="color" value="${filtered.filter[key].colourFull}">
+  </div>
+<% }) %>

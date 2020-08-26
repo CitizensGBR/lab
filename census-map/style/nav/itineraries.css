@@ -1,0 +1,163 @@
+.filter-itineraries {
+  overflow: auto;
+  min-height: 10em;
+  max-height: 100%;
+  flex-shrink: 1;
+  background: #111;
+}
+
+.toggle-next:checked + .filter-itinerary--item + .header {
+  display: none;
+}
+
+.filter-itineraries--label[data-total]::after {
+  content:  '(' attr(data-total) ')';
+  display: inline-block;
+  margin-left: 0.4em;
+}
+
+.filter-itinerary--item input {
+  width:  100%;
+  border: none;
+  line-height:  3em;
+  font-size: 0.8em;
+  border: none;
+  box-sizing: border-box;
+  padding: 0 1em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-weight: 500;
+}
+
+.filter-itinerary--dates,
+.filter-itinerary--options {
+  display: flex;
+  background: #666;
+  color: #fff;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-itinerary--dates input {
+  background: none;
+  color: inherit;
+  text-align: center;
+  box-shadow: none;
+  margin: 0 1em;
+  padding: 0;
+}
+
+.filter-itinerary--dates input:last-child {
+  /* background: none; */
+  /* margin: 0 0 0 1em; */
+  /* padding: 0 1em 0 0; */
+}
+
+.filter-itinerary--options {
+  padding: 1em;
+}
+
+.filter-itinerary--options::before {
+  font-size: 0.7em;
+  content: attr(data-count) ' survey locations';
+}
+
+
+.filter-itinerary--item ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: itinerary;
+  max-height: 20em;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background:  #eee;
+}
+
+.filter-itinerary--item ol[data-drag] > li > * {
+  pointer-events: none;
+}
+
+.filter-itinerary--item li {
+  position: relative;
+  counter-increment: itinery;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+  display: flex;
+  padding-right: 0.75em;
+  flex: 1 0 auto; /* Safari bug */
+}
+
+.filter-itinerary--item li.is-dragging {
+  background: #FF00FF66;
+  position: relative;
+  padding: 0;
+}
+
+.filter-itinerary--item li.is-dragging::before {
+  display: none;
+}
+
+.filter-itinerary--item li label {
+  flex-grow:  1;
+  user-select: none;
+  padding: 1em 1em 1em 2.5em;
+}
+
+.filter-itinerary--item li label::before {
+  content: counter(itinery)'.';
+  font-size: 1em;
+  position: absolute;
+  left: 0;
+  display: block;
+  width: 2em;
+  text-align: right;
+}
+
+.filter-itinerary--item li label:hover::before {
+  content: '≡';
+  width: 1.8em;
+  font-weight: 500;
+  margin-top: 0.3em;
+}
+
+.filter-itinerary--item li.is-dragging label {
+  position: relative;
+  z-index: -1;
+  background: #fff;
+}
+
+.filter-itinerary--item li label > * {
+  pointer-events: none;
+}
+
+.filter-itinerary--item li small {
+  font-weight: 500;
+}
+
+.filter-itinerary--item li button {
+  align-self: center;
+  line-height: 1.8em;
+}
+
+.filter-itinerary--item li.is-dragging button {
+  display: none;
+}
+
+.filter-itinerary--item + .header {
+  background: #333;
+  border-top: 1px solid #000;
+  border-bottom: none;
+}
+
+.filter-itinerary--item + .header .filter-itinerary--label {
+  padding-left: 1em;
+}
+
+.filter-itinerary--item + .header .filter-itinerary--label::before {
+  content: '►';
+  font-size: 0.6em;
+  margin-right: 0.4em;
+  position: relative;
+  top: -0.3em;
+}

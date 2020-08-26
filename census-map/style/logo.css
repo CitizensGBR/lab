@@ -1,0 +1,25 @@
+.logo {
+  position: absolute;
+  bottom:  2em;
+  width:  11em;
+  fill:  #003556;
+  right:  1em;
+  z-index: 0;
+}
+.logo::before {
+  content: '';
+  position: absolute;
+  left: -1em;
+  right: -1em;
+  top: -0.75em;
+  bottom: -0.55em;
+  display: block;
+  transition: 0.4s transform;
+  transform: scaleX(0);
+  transform-origin: 100% 0;
+  background: #ffffff80;
+  z-index: -1;
+}
+.logo:hover::before {
+  transform: scaleX(1);
+}
