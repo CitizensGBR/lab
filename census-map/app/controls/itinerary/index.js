@@ -133,7 +133,6 @@ export const create = (gids) => {
     const $list = $el.itineraries.querySelector(`[name="itinerary-toggle"][data-index="${props.activeItinerary.index}"] ~ .filter-itinerary--item > ol`)
     updateItinerary($list);
   } else {
-    render();
     props.itineraries.push({
       title: '',
       features,
@@ -147,6 +146,7 @@ export const create = (gids) => {
       if ($itinerary) $itinerary.checked = true;
       map.update(true);
     });
+    render();
   }
 };
 
