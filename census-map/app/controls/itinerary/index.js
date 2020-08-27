@@ -4,6 +4,7 @@ import { load } from '../../util/template.js';
 import map from '../../map/index.js';
 import filterKey from '../filter/key.js';
 import featureItineraries from '../../map/features/itineraries.js';
+import { distance } from '../../util/turf.js';
 
 const templates = {
   itineraries: 'app/controls/itinerary/template/itineraries.html',
@@ -191,14 +192,14 @@ const save = () => {
 };
 
 const updateItinerary = ($list) => {
-  $list.innerHTML = templates.features({ features: props.activeItinerary.features });
+  $list.innerHTML = templates.features({ features: props.activeItinerary.features, distance });
   $list.nextElementSibling.dataset.count = props.activeItinerary.features.length;
   save();
   map.update();
 }
 
 const render = () => {
-  $el.itineraries.innerHTML = templates.itineraries({ itineraries: props.itineraries });
+  $el.itineraries.innerHTML = templates.itineraries({ itineraries: props.itineraries, distance });
   $el.itinerariesLabel.dataset.total = props.itineraries.length;
   save();
 };

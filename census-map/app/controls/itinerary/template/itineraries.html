@@ -6,7 +6,7 @@
       <input type="date" data-action="date-from" data-index="${i}" value="${itinerary.dates[0]}" placeholder="yyyy-mm-dd">➞<input type="date" data-action="date-to" data-index="${i}" value="${itinerary.dates[1]}" placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}">
     </div>
     <ol data-index="${i}">
-      <%= templates.features({ features: itinerary.features }) %>
+      <%= templates.features({ features: itinerary.features, distance }) %>
     </ol>
     <div class="filter-itinerary--options" data-count="${itinerary.features.length}">
       <button data-action="remove" data-index="${i}">Remove itinerary</button>
