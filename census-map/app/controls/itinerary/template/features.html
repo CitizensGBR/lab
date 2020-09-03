@@ -1,7 +1,7 @@
 <% features.forEach((feature, ii) => { %>
   <li style="order:${(ii + 2) * 3}" data-index="${ii}">
     <% if (ii) { %>
-      <span class="filter-itinerary--distance"><%= +distance(features[ii].geometry.coordinates, features[ii - 1].geometry.coordinates).toFixed(1) %>km</span>
+      <span class="filter-itinerary--distance"><%= +distance(features[ii].geometry.coordinates, features[ii - 1].geometry.coordinates).toFixed(1) %>km / <%= +distance(features[ii].geometry.coordinates, features[ii - 1].geometry.coordinates, 'nmi').toFixed(1) %>nm</span>
     <% } %>
     <label data-gid="${feature.properties.gid}" data-index="${ii}" draggable="true">
       <span>${[].concat(feature.properties.name || [], feature.properties.gid).join(' ')}</span>
