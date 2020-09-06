@@ -39,7 +39,7 @@ export const init = () => new Promise((resolve) => {
   ])
   .then(() => {
     map.addControl(new mapboxgl.AttributionControl({
-      customAttribution: templates.attribution,
+      customAttribution: templates.attribution(),
     }));
     map.addControl(new mapboxgl.ScaleControl({
       // maxWidth: 80,
