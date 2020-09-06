@@ -194,6 +194,7 @@ const save = () => {
 const updateItinerary = ($list) => {
   $list.innerHTML = templates.features({ features: props.activeItinerary.features, distance });
   $list.nextElementSibling.dataset.count = props.activeItinerary.features.length;
+  $el.itinerariesLabel.dataset.reefs = props.itineraries.reduce((_, i) => _ + i.features.length, 0);
   save();
   map.update();
 }
@@ -201,6 +202,7 @@ const updateItinerary = ($list) => {
 const render = () => {
   $el.itineraries.innerHTML = templates.itineraries({ itineraries: props.itineraries, distance });
   $el.itinerariesLabel.dataset.total = props.itineraries.length;
+  $el.itinerariesLabel.dataset.reefs = props.itineraries.reduce((_, i) => _ + i.features.length, 0);
   save();
 };
 

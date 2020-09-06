@@ -10,8 +10,14 @@
   display: none;
 }
 
-.filter-itineraries--label[data-total]::after {
-  content:  '(' attr(data-total) ')';
+.filter-itineraries--label[data-total]::before {
+  content:  attr(data-total) ' ×';
+  display: inline-block;
+  margin-right: 0.4em;
+}
+
+.filter-itineraries--label[data-total][data-reefs]::after {
+  content:  '(' attr(data-reefs) ' reef groups)';
   display: inline-block;
   margin-left: 0.4em;
 }
