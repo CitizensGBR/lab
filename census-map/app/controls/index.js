@@ -8,13 +8,32 @@ import map from '../map/index.js';
 export const init = () => {
   props.activeControls = {};
 
+  let controlMode;
   if (hash.props.admin && hash.props.admin.active) {
-    $el.nav.dataset.control = 'admin';
+    $el.nav.dataset.control = controlMode = 'admin';
   } else if (hash.props.controls && hash.props.controls.active) {
-    $el.nav.dataset.control = '';
+    $el.nav.dataset.control = controlMode = 'control';
   } else {
     $el.itinerariesInput.checked = true;
   }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.keyCode === 67 && e.ctrlKey && e.shiftKey) {
+      controlMode = (!controlMode && 'control')
+      || (controlMode == 'control' && 'admin')
+      || null;
+
+      if (controlMode) {
+        $el.nav.dataset.control = controlMode;
+        $el.highlightInput.checked = true;
+      } else {
+        delete $el.nav.dataset.control;
+        $el.itinerariesInput.checked = true;
+      }
+      hash.set('admin', controlMode === 'admin');
+      hash.set('controls', controlMode === 'control');
+    }
+  });
 
   return Promise.all([filters, search, itinerary].map(fn => fn.init()))
   .then(() => {

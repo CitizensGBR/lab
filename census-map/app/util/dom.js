@@ -6,6 +6,7 @@ export const $el = {
   itineraries: document.querySelector('.filter-itineraries'),
   itinerariesInput: document.querySelector('#toggle-itineraries'),
   itinerariesLabel: document.querySelector('.filter-itineraries--label'),
+  highlightInput: document.querySelector('#toggle-highlight'),
   controlsToggle: document.querySelectorAll('input[name="filter-section-toggle"]'),
   ranges: [ ...document.querySelectorAll('.filter-range') ],
   colours: document.querySelector('.filter-colours'),
