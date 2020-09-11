@@ -11,7 +11,7 @@ const parseCSV = csv =>
         __.list[i - 1][__.cols[ii]] = isNaN(cell) ? cell : +cell;
       }
       return __
-    }, _), { cols: [], list: [] }).list
+    }, _), { cols: [], list: [] }).list;
 
 export const load = (sources) => {
   const isString = typeof sources === 'string';

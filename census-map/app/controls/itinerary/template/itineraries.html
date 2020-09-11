@@ -10,6 +10,13 @@
     </ol>
     <div class="filter-itinerary--options" data-count="${itinerary.features.length}">
       <button data-action="remove" data-index="${i}">Remove itinerary</button>
+
+      <div class="filter-itinerary--downloads">
+        <small>Export:</small>
+        <a data-action="download" data-type="kml" data-index="${i}">kml</a>
+        <a data-action="download" data-type="geojson" data-index="${i}">geojson</a>
+        <a data-action="url" data-index="${i}">url</a>
+      </div>
     </div>
   </div>
   <div class="header">

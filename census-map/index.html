@@ -73,19 +73,24 @@
 
         <section id="filter-toggles">
           <h3>GBRMPA identified reefs</h3>
-          <h4>Resilience</h4>
-          <label><input class="filter-item" data-type="status" data-value="hd" data-title="High Disturbance" data-colour="#FA0" type="checkbox"><strong>HD</strong> <u>H</u>igh risk of <u>d</u>isturbance</label>
-          <label><input class="filter-item" data-type="status" data-value="ld" data-title="Low Disturbance" data-colour="#04B" type="checkbox"><strong>LD</strong> <u>L</u>ow risk of <u>d</u>isturbance</label>
-          <label><input class="filter-item" data-type="status" data-value="hr" data-title="High Recovery" data-colour="#0B5" type="checkbox"><strong>HR</strong> <u>H</u>igh <u>r</u>ecovery potential</label>
-          <label><input class="filter-item" data-type="status" data-value="lr" data-title="Low Recovery" data-colour="#F60" type="checkbox"><strong>LR</strong> <u>L</u>ow <u>r</u>ecovery potential</label>
+
+          <div class="filter-toggles--resilience">
+            <h4>Resilience</h4>
+            <label><input class="filter-item" data-type="status" data-value="hd" data-title="High Disturbance" data-colour="#FA0" type="checkbox"><strong>HD</strong> <u>H</u>igh risk of <u>d</u>isturbance</label>
+            <label><input class="filter-item" data-type="status" data-value="ld" data-title="Low Disturbance" data-colour="#04B" type="checkbox"><strong>LD</strong> <u>L</u>ow risk of <u>d</u>isturbance</label>
+            <label><input class="filter-item" data-type="status" data-value="hr" data-title="High Recovery" data-colour="#0B5" type="checkbox"><strong>HR</strong> <u>H</u>igh <u>r</u>ecovery potential</label>
+            <label><input class="filter-item" data-type="status" data-value="lr" data-title="Low Recovery" data-colour="#F60" type="checkbox"><strong>LR</strong> <u>L</u>ow <u>r</u>ecovery potential</label>
+          </div>
 
           <h4>Monitoring</h4>
           <label><input class="filter-item" data-type="survey" data-key="Un" data-title="Unsurveyed" data-colour="#CAC" type="checkbox"><strong><u>Un</u></strong>surveyed (targeted)</label>
           <label><input class="filter-item" data-type="survey" data-key="Mo" data-title="Monitored" data-value="aims|mmp|bzgz" data-colour="#0AC" type="checkbox"><strong><u>Mo</u></strong>nitored (LTMP, MMP, BZGZ)</label>
           <label><input class="filter-item" data-type="survey" data-key="Su" data-title="Surveyed" data-value="cb|eotr" data-colour="#AC0" type="checkbox"><strong><u>Su</u></strong>rveyed (Bleaching Response, EOTR)</label>
 
-          <h3>Other identified reefs</h3>
-          <label><input class="filter-item" data-type="attr" data-key="Key" data-value="keysourcereef" data-title="Key Source Reef" data-colour="#50F" type="checkbox"><strong><u>Key</u></strong> Source Reefs</label>
+          <div class="filter-toggles--other">
+            <h3>Other identified reefs</h3>
+            <label><input class="filter-item" data-type="attr" data-key="Key" data-value="keysourcereef" data-title="Key Source Reef" data-colour="#50F" type="checkbox"><strong><u>Key</u></strong> Source Reefs</label>
+          </div>
         </section>
       </div>
 

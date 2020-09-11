@@ -5,6 +5,7 @@ import map from '../../map/index.js';
 import filterKey from '../filter/key.js';
 import featureItineraries from '../../map/features/itineraries.js';
 import { distance } from '../../util/turf.js';
+import { toKML } from '../../util/kml.js';
 
 const templates = {
   itineraries: 'app/controls/itinerary/template/itineraries.html',
@@ -56,7 +57,7 @@ export const init = () => new Promise((resolve) => {
 
 const invalidAction = (action, event) => {
   const type = {
-    click: ['remove', 'remove-feature'],
+    click: ['remove', 'remove-feature', 'download', 'url'],
     input: ['toggle', 'title', 'date-from', 'date-to'],
   }[event];
   return !type || type.indexOf(action) < 0;
@@ -110,6 +111,38 @@ const onAction = (e) => {
   } else if (action === 'remove-feature') {
     props.activeItinerary.features.splice(index, 1);
     updateItinerary(e.target.parentElement.parentElement);
+  } else if (action === 'url') {
+    e.preventDefault();
+    const itinerary = hash.props.itinerary.value.split(':')[index];
+    prompt('Copy the sharing URL below:', window.location.toString().replace(/#.*$/, '').concat(`#shared:${Date.now()}|_itinerary:${itinerary}`))
+  } else if (action === 'download') {
+    e.preventDefault();
+    const type = e.target.dataset.type;
+
+
+    const gids = props.activeItinerary.features.map(feature => feature.properties.gid);
+
+    if (!gids.length) return;
+
+    const features = map.getFeatures(gids);
+
+    if (!features.length) {
+      return alert('Please wait until the layer has fully loaded');
+    }
+
+    const featureCollection = { type: 'FeatureCollection', features };
+
+    let data;
+    if (type === 'kml') {
+      data = toKML(featureCollection, props.activeItinerary.title);
+    } else {
+      data = JSON.stringify(featureCollection, null, 2);
+    }
+
+    const anchor = document.createElement('a')
+    anchor.download = `${props.activeItinerary.title || gids.join('_')}.${type}`;
+    anchor.href = URL.createObjectURL(new Blob([data]));
+    anchor.click()
   }
 };
 

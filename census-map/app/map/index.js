@@ -157,6 +157,21 @@ export const render = () => {
   filtered.running = false;
 };
 
+export const getFeatures = (gids = []) =>
+  map.queryRenderedFeatures({ layers: [mapbox.layer.reefs] })
+  .reduce((_, feature, i) => {
+    if (gids.indexOf(feature.properties.gid) >= 0 && _.gids.indexOf(feature.properties.gid) < 0) {
+      _.gids.push(feature.properties.gid);
+      const json = feature.toJSON();
+      _.list.push({
+        type: json.type,
+        geometry: json.geometry,
+        properties: json.properties,
+      });
+    }
+    return _;
+  }, { list: [], gids: [] }).list;
+
 const onMove = (e) => {
   if (!e) {
     if (props.popup && props.popup.isOpen()) props.popup.remove();
@@ -236,4 +251,4 @@ export const toBounds = list => [].concat(list).reduce((_, feature) => {
   return _;
 }, false);
 
-export default { init, deselect, easeTo, fitBounds, toBounds, render, update };
+export default { init, deselect, easeTo, fitBounds, toBounds, render, update, getFeatures };

@@ -60,11 +60,28 @@
 
 .filter-itinerary--options {
   padding: 1em;
+  flex-wrap: wrap;
 }
 
 .filter-itinerary--options::before {
   font-size: 0.7em;
   content: attr(data-count) ' survey locations';
+}
+
+.filter-itinerary--downloads {
+  flex-basis: 100%;
+  font-size: 0.8em;
+  margin-top:  0.4em;
+}
+
+.filter-itinerary--downloads a {
+  display: inline-block;
+  border-bottom: 1px dotted;
+  margin-left: 0.4em;
+}
+
+.filter-itinerary--downloads a:hover {
+  border-bottom-color: transparent;
 }
 
 

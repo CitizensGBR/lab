@@ -58,7 +58,7 @@
   margin: 1em 0 0.4em;
   font-weight: 400;
 }
-.filter-items h3:first-child {
+.filter-items section > h3:first-child {
   margin-top: 0;
 }
 .filter-items h4 {
@@ -278,4 +278,16 @@ h3 .c-info.c-info-down em {
   border-top: 1px solid #0000001a;
   background: #0000000a;
   position: relative;
+}
+
+.nav:not([data-control]) label[for="toggle-highlight"],
+.nav:not([data-control]) .filter-items--content,
+.nav:not([data-control="admin"]) #filter-analysis,
+.nav:not([data-control="admin"]) .filter-toggles--resilience,
+.nav:not([data-control="admin"]) .filter-toggles--other {
+  display: none !important;
+}
+
+.nav:not([data-control="admin"]) .filter-items--content {
+  padding-top: 0;
 }
