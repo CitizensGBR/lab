@@ -130,7 +130,14 @@ const onAction = (e) => {
       return alert('Please wait until the layer has fully loaded');
     }
 
-    const featureCollection = { type: 'FeatureCollection', features };
+    const featureCollection = {
+      type: 'FeatureCollection',
+      features,
+      properties: {
+        itinerary: props.activeItinerary.title || '',
+        dates: props.activeItinerary.dates,
+      },
+    };
 
     let data;
     if (type === 'kml') {

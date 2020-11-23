@@ -30,8 +30,14 @@ export const init = () => new Promise((resolve) => {
     style: mapbox.style, // stylesheet location
     center: [146, -16.77], // starting position [lng, lat]
     zoom: 6, // starting zoom
+    /* TEST MAP */
+      // center: [148.886, -19.467],
+      // zoom: 17,
+    /* END TEST MAP */
+    maxZoom: 17.499,
     attributionControl: false,
   });
+  // map.on('zoom', e => console.log(map.getZoom()));
   map.once('render', map.resize);
   Promise.all([
     load(templates),
@@ -47,6 +53,27 @@ export const init = () => new Promise((resolve) => {
  
     mapReady();
     resolve();
+
+    /* TEST MAP */
+    // map.addLayer({
+    //   id: 'planet_2019',
+    //   layout: {
+    //     // visibility: 'none'
+    //   },
+    //   type: 'raster',
+    //   source: {
+    //     type: 'raster',
+    //     tiles: [
+    //       // 'https://www.allencoralatlas.org/tiles/planet/visual/2019/{z}/{x}/{y}'
+    //       // ArcGIS hires reef map! https://services.arcgisonline.com/arcgis/rest/services
+    //       'https://services.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}'
+    //     ],
+    //     tileSize: 256,
+    //   },
+    //   maxzoom: 18,
+    // })
+    /* END TEST MAP */
+    
   });
 });
 
@@ -56,13 +83,13 @@ const mapReady = () => {
   Itineraries.init(map);
   Reefs.init(map);
 
-  map.easeTo({
-    zoom: 10,
-    bearing: 0,
-    pitch: 40,
-    duration: 2000,
-    center: [146.265366, -16.778374] // Milln Reef,
-  });
+  // map.easeTo({
+  //   zoom: 10,
+  //   bearing: 0,
+  //   pitch: 40,
+  //   duration: 2000,
+  //   center: [146.265366, -16.778374] // Milln Reef,
+  // });
 
   const debounceRender = debounce(render, 500);
 

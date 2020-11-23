@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30" viewBox="0 0 40 30">
+  <defs>
+    <style>
+      .a {
+        fill: #cbcfff;
+      }
+
+      .b, .d {
+        fill: none;
+        stroke: #246f95;
+        stroke-width: 2px;
+      }
+
+      .c {
+        fill: #236f95;
+        fill-rule: evenodd;
+      }
+
+      .d {
+        stroke-linecap: square;
+      }
+    </style>
+  </defs>
+  <circle class="a" cx="25" cy="15" r="15"/>
+  <path class="b" d="M15,1.26,28.84,11.83,23.53,29H6.47L1.16,11.83Z"/>
+  <polygon class="c" points="17.06 20.87 19.6 22.61 21.34 20.08 18.81 18.33 17.06 20.87"/>
+  <polygon class="c" points="8 16.54 10.54 18.28 12.28 15.75 9.75 14 8 16.54"/>
+  <path class="c" d="M18.08,12.62a1.54,1.54,0,1,1,1.54-1.54,1.54,1.54,0,0,1-1.54,1.54m0-4.62a3.08,3.08,0,1,0,3.08,3.08A3.08,3.08,0,0,0,18.08,8"/>
+  <line class="d" x1="1" y1="29" x2="29" y2="29"/>
+</svg>

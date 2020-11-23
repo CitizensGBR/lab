@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="39.5" height="30" viewBox="0 0 39.5 30">
+  <defs>
+    <style>
+      .a {
+        fill: #fff;
+      }
+
+      .a, .e {
+        fill-rule: evenodd;
+      }
+
+      .b {
+        fill: #ffc3ac;
+      }
+
+      .c {
+        fill: none;
+        stroke: #246f95;
+        stroke-width: 2px;
+      }
+
+      .d {
+        mask: url(#a);
+      }
+
+      .e {
+        fill: #236f95;
+      }
+    </style>
+    <mask id="a" x="17.56" y="17.33" width="4.28" height="4.28" maskUnits="userSpaceOnUse">
+      <polygon class="a" points="17.56 17.33 21.84 17.33 21.84 21.62 17.56 21.62 17.56 17.33"/>
+    </mask>
+  </defs>
+  <circle class="b" cx="24.5" cy="15" r="15"/>
+  <path class="c" d="M1,20l.38-4.95,2.67-6H10C10.52,3.63,13.22.94,18.12,1S26.5,4.4,28.6,11l3.8-2.27L38.13,13V29"/>
+  <g class="d">
+    <polygon class="e" points="17.56 19.87 20.1 21.62 21.84 19.08 19.31 17.33 17.56 19.87"/>
+  </g>
+  <polygon class="e" points="6.5 17.54 9.03 19.28 10.78 16.75 8.24 15 6.5 17.54"/>
+  <polygon class="e" points="9.5 26.54 12.03 28.28 13.78 25.75 11.24 24 9.5 26.54"/>
+  <polygon class="e" points="28.5 17.54 31.03 19.28 32.78 16.75 30.24 15 28.5 17.54"/>
+  <polygon class="e" points="25.5 26.54 28.03 28.28 29.78 25.75 27.24 24 25.5 26.54"/>
+  <path class="e" d="M18.58,11.62a1.54,1.54,0,1,1,1.54-1.54,1.54,1.54,0,0,1-1.54,1.54m0-4.62a3.08,3.08,0,1,0,3.07,3.08A3.08,3.08,0,0,0,18.58,7"/>
+</svg>

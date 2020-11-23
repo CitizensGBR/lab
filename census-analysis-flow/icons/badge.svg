@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="180" height="180" viewBox="0 0 180 180">
+  <defs>
+    <style>
+      .a, .b {
+        fill: none;
+      }
+
+      .b {
+        clip-rule: evenodd;
+      }
+
+      .c {
+        clip-path: url(#a);
+      }
+
+      .d {
+        clip-path: url(#b);
+      }
+
+      .e {
+        fill: #cdcee8;
+      }
+
+      .f {
+        clip-path: url(#c);
+      }
+
+      .g {
+        isolation: isolate;
+      }
+
+      .h {
+        clip-path: url(#e);
+      }
+
+      .i {
+        clip-path: url(#f);
+      }
+
+      .j {
+        fill: #010101;
+      }
+
+      .k {
+        clip-path: url(#h);
+      }
+
+      .l {
+        clip-path: url(#j);
+      }
+
+      .m {
+        clip-path: url(#k);
+      }
+
+      .n {
+        clip-path: url(#l);
+      }
+
+      .o {
+        clip-path: url(#m);
+      }
+    </style>
+    <clipPath id="a" transform="translate(10 10)">
+      <circle class="a" cx="80" cy="80" r="80"/>
+    </clipPath>
+    <clipPath id="b" transform="translate(10 10)">
+      <rect class="a" x="-540" y="-1440" width="3840" height="2160"/>
+    </clipPath>
+    <clipPath id="c" transform="translate(10 10)">
+      <rect class="a" x="54" y="51.9" width="49.89" height="58.1"/>
+    </clipPath>
+    <clipPath id="e" transform="translate(10 10)">
+      <rect class="a" x="54" y="51" width="50" height="60"/>
+    </clipPath>
+    <clipPath id="f" transform="translate(10 10)">
+      <path class="b" d="M54,85.69a17,17,0,0,0,17,17h2.26v4.24h-5.7a1.53,1.53,0,1,0,0,3.06H96.45a1.53,1.53,0,1,0,0-3.06H90.73V95.14h11.63a1.53,1.53,0,0,0,0-3.06H90.12a8.72,8.72,0,0,0-16.21,0H71A6.36,6.36,0,0,1,68.26,80a7.75,7.75,0,0,0,10.3-1.39L81,81a4.29,4.29,0,0,0,5.78.27L89.46,84a2.6,2.6,0,0,0,3.67,0l2.58-2.57a2.62,2.62,0,0,0,0-3.67l-2.62-2.69a4.29,4.29,0,0,0-.27-5.78L75.88,52.35a1.52,1.52,0,0,0-2.16,0h0L64.14,62a1.52,1.52,0,0,0,0,2.16h0l3.5,3.5a8,8,0,0,0-1.55,1.79A17,17,0,0,0,54,85.69Zm28,3.92a5.68,5.68,0,0,1,5.67,5.69h0v11.63H76.32V95.31A5.67,5.67,0,0,1,82,89.61ZM72.66,78.25a4.71,4.71,0,1,1,4.71-4.71A4.71,4.71,0,0,1,72.66,78.25Zm18.69,3.24L89,79.14l1.92-1.92,2.35,2.35ZM67.38,63l7.44-7.44L90.66,71.43a1.22,1.22,0,0,1,0,1.73h0L85,78.87a1.27,1.27,0,0,1-1.74,0l-3.11-3.11a7.76,7.76,0,0,0-9.66-9.66ZM64.93,73.15v.4a7.73,7.73,0,0,0,1.23,4.12,9.42,9.42,0,0,0,4.9,17.44h2.26v4.53H71a13.95,13.95,0,0,1-6.12-26.49Z"/>
+    </clipPath>
+    <clipPath id="h" transform="translate(10 10)">
+      <rect class="a" x="61.73" y="50" width="8.48" height="8.47"/>
+    </clipPath>
+    <clipPath id="j" transform="translate(10 10)">
+      <rect class="a" x="61" y="49" width="10" height="10"/>
+    </clipPath>
+    <clipPath id="k" transform="translate(10 10)">
+      <path class="b" d="M64.4,58l5.36-5.34a1.53,1.53,0,1,0-2.17-2.17l-5.34,5.34a1.53,1.53,0,0,0,2,2.29L64.4,58"/>
+    </clipPath>
+    <clipPath id="l" transform="translate(10 10)">
+      <rect class="a" x="61" y="50" width="10" height="9"/>
+    </clipPath>
+    <clipPath id="m" transform="translate(10 10)">
+      <path class="b" d="M81.81,96.83H82a1.53,1.53,0,1,0-.18,0"/>
+    </clipPath>
+  </defs>
+  <g class="c">
+    <g class="d">
+      <rect class="e" width="180" height="180"/>
+    </g>
+  </g>
+  <g class="f">
+    <g class="d">
+      <g class="g">
+        <g class="h">
+          <g class="i">
+            <g class="h">
+              <rect class="j" x="54" y="51.9" width="69.89" height="78.1"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="k">
+    <g class="d">
+      <g class="g">
+        <g class="l">
+          <g class="m">
+            <g class="n">
+              <rect class="j" x="61.73" y="50" width="28.48" height="28.47"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g class="o">
+    <g class="d">
+      <rect class="j" x="80.36" y="93.76" width="23.07" height="23.07"/>
+    </g>
+  </g>
+</svg>
