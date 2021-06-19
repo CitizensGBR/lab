@@ -1,8 +1,10 @@
 export const data = {
-  gbrmpa: 'gbrmpa-reefs.json',
-  keysourcereefs: 'source-reefs.json',
-  priorityreefs: 'priority-reefs.csv',
-  features: 'GBR-Features-points.pbf',
+  gbrmpa: 'data/gbrmpa-reefs.json',
+  keysourcereefs: 'data/source-reefs.json',
+  priorityreefs: 'data/priority-reefs.csv',
+  gbr2020: 'data/gbr2020.csv',
+  grc2020: 'data/grc2020.json',
+  features: 'data/GBR-Features-points.pbf',
 };
 
 export const mapbox = {

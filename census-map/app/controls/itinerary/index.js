@@ -63,6 +63,8 @@ const invalidAction = (action, event) => {
   return !type || type.indexOf(action) < 0;
 }
 
+// let dummyMapbearing = 0;
+
 const onAction = (e) => {
   const action = e.target.dataset.action;
   if (!action || invalidAction(action, e.type)) return;
@@ -72,7 +74,9 @@ const onAction = (e) => {
     props.activeItinerary = props.itineraries[index];
     const active = props.activeItinerary.features[0];
     if (active) {
-      map.fitBounds(map.toBounds(props.activeItinerary.features), { padding: 100 });
+      map.fitBounds(map.toBounds(props.activeItinerary.features), { padding: 100, duration: 4000 });
+      // map.fitBounds(map.toBounds(props.activeItinerary.features), { padding: 100, duration: 4000, bearing: dummyMapbearing });
+      // dummyMapbearing += 15;
     }
     filterKey.render();
     map.update(true);

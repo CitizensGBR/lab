@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Great Reef Census: Reefs</title>
+  <base href="/census-map/">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/1.11.1/mapbox-gl.min.css" integrity="sha512-KxWh2zhfqjqLf8V6nej7w8PbXiZuqrQq+PA1EE+73+7dpYbMocKIXKPlq50ZaWPDY5iQcyaX3I4xLUuOWBCCug==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.0/nouislider.min.css" integrity="sha512-6JqGSqQ++AEggYltdgSse8pKG90U/5U0bbkZoa94uSDG/BhI5YpYcy2LyWPWjXu40lUVEgEKHZ/2hCrwQvbODw==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="style/index.css" />
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192x192.png">
+  <script>
+    try { // update favicon for darkmode
+      window.matchMedia('(prefers-color-scheme: dark)').matches && document.querySelectorAll('link[href*="favicon-"]').forEach($l => $l.href = $l.href.replace(/favicon-(\d)/, 'favicon-darkmode-$1'));
+    } catch (e) { /**/ }
+  </script>
+  <meta name="theme-color" content="#003556">
+</head>
+<body>
+<div class="map">
+  <div id="map" width="100%" height="100%"></div>
+  <aside class="meta">
+    <h1 class="meta-depth"></h1>
+  </aside>
+  <div class="search">
+    <input class="search-input" placeholder="Search for a reef or island">
+    <ul class="search-results"></ul>
+  </div>
+  <aside class="nav" style="display:none" tabindex="0">
+
+    <div class="filter-items">
+      <input id="toggle-itineraries" type="radio" name="filter-section-toggle" class="hidden toggle-after" value="itineraries">
+      <header class="header"><label class="filter-itineraries--label" for="toggle-itineraries">Itineraries</label></header>
+
+      <div class="filter-itineraries toggle-this"></div>
+
+
+      <header class="header"><label for="toggle-highlight">Data Highlight</label></header>
+      <input id="toggle-highlight" type="radio" name="filter-section-toggle" class="hidden toggle-next" checked value="highlight">
+
+      <div class="filter-items--content">
+        <section id="filter-analysis">
+
+          <h3>Reef Importance Analysis <abbr tabindex="0" class="c-info c-info-down"><em>Reefs are evaluated and scored by total larval enrichment potential versus 'neediness' of neighbouring reefs. A second component of the score simplifies connectivity considerations, counting only the number of connected 'needy' reefs (&lt; 20% coral cover). Combined scores are generated on both a reef-wide and per-sector scale. Source: Pete Mumby</em></abbr></h3>
+
+
+          <h4 class="label">Score per sector <abbr tabindex="0" class="c-info c-info-down"><em>Scores for each reef are scaled and applied per AIMS sector</em></abbr></h4>
+          
+          <span class="label"><strong>Importance</strong> <abbr tabindex="0" class="c-info c-info-down"><em>The sum of larval enhancement (implicitly counting the number of connected reefs), and number of reefs in need.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="i" data-min="0" data-max="2" data-type="importance_sector"></div>
+          
+          <span class="label"><strong>Importance (10% classes)</strong> <abbr tabindex="0" class="c-info c-info-down"><em>Importance scores in each sector sorted in equal-sized chunks, where a score of 1 is in the bottom 10% of values in the sector and a score of 10 is in the top 10% of values.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="i10" data-type="importance_10_sector" data-step="1" data-min="1" data-max="10" data-format="i"></div>
+
+          <span class="label"><strong>Larval enrichment</strong> <abbr tabindex="0" class="c-info"><em>Examines the contribution of each reef to the supply of other reefs in need.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="e" data-type="enrichment_sector"></div>
+
+          <span class="label"><strong>Connectivity</strong> <abbr tabindex="0" class="c-info"><em>The second component of the score examines how many 'needy' reefs (&lt; 20% coral cover) are served by each reef</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="c" data-type="reefs_supplied_sector"></div>
+
+          <h4 class="label">GBR score <abbr tabindex="0" class="c-info"><em>Scores for each reef at whole-of-reef scale</em></abbr></h4>
+
+          <span class="label"><strong>Overall importance score</strong> <abbr tabindex="0" class="c-info"><em>Final metric applied (0-2) without prioritisation for individual sectors. While this predicts the best of the GBR overall, it may neglect reefs that are locally important but not significant at whole-of-reef scale.</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="s" data-min="0" data-max="2" data-type="score"></div>
+
+          <h4 class="label">Other metrics</h4>
+
+          <span class="label"><strong>AIMS sector</strong> <output></output><output></output></span>
+          <div class="filter-range" data-key="a" data-type="aims_sector" data-step="1" data-min="1" data-max="11" data-format="i"></div>
+
+          <span class="label"><strong>Predicted coral cover</strong> <abbr tabindex="0" class="c-info"><em>Source: ReefMod (UQ) Yves-Marie Bozec & Pete Mumby</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="p" data-type="coral_cover_2020" data-format="p"></div>
+
+          <span class="label"><strong>Degree heating weeks 2020</strong> <abbr tabindex="0" class="c-info"><em>Source: ReefMod (UQ) Yves-Marie Bozec & Pete Mumby</em></abbr> <output></output><output></output></span>
+          <div class="filter-range" data-key="dhw" data-type="DHW2020" data-min="0" data-max="15"></div>
+        </section>
+
+        <section id="filter-toggles">
+          <h3>GBRMPA identified reefs</h3>
+
+          <div class="filter-toggles--resilience">
+            <h4>Resilience</h4>
+            <label><input class="filter-item" data-type="status" data-value="hd" data-title="High Disturbance" data-colour="#FA0" type="checkbox"><strong>HD</strong> <u>H</u>igh risk of <u>d</u>isturbance</label>
+            <label><input class="filter-item" data-type="status" data-value="ld" data-title="Low Disturbance" data-colour="#04B" type="checkbox"><strong>LD</strong> <u>L</u>ow risk of <u>d</u>isturbance</label>
+            <label><input class="filter-item" data-type="status" data-value="hr" data-title="High Recovery" data-colour="#0B5" type="checkbox"><strong>HR</strong> <u>H</u>igh <u>r</u>ecovery potential</label>
+            <label><input class="filter-item" data-type="status" data-value="lr" data-title="Low Recovery" data-colour="#F60" type="checkbox"><strong>LR</strong> <u>L</u>ow <u>r</u>ecovery potential</label>
+          </div>
+
+          <h4>Monitoring</h4>
+          <label><input class="filter-item" data-type="survey" data-key="Un" data-title="Unsurveyed" data-colour="#CAC" type="checkbox"><strong><u>Un</u></strong>surveyed (targeted)</label>
+          <label><input class="filter-item" data-type="survey" data-key="Mo" data-title="Monitored" data-value="aims|mmp|bzgz" data-colour="#0AC" type="checkbox"><strong><u>Mo</u></strong>nitored (LTMP, MMP, BZGZ)</label>
+          <label><input class="filter-item" data-type="survey" data-key="Su" data-title="Surveyed" data-value="cb|eotr" data-colour="#AC0" type="checkbox"><strong><u>Su</u></strong>rveyed (Bleaching Response, EOTR)</label>
+          <label><input class="filter-item" data-type="survey" data-key="Ce" data-title="Surveyed" data-value="grc2020" data-colour="#F07" type="checkbox"><strong><u>Ce</u></strong>nsus 2020 (Great Reef Census)</label>
+
+          <div class="filter-toggles--other">
+            <h3>Other identified reefs</h3>
+            <label><input class="filter-item" data-type="attr" data-key="Key" data-value="keysourcereef" data-title="Key Source Reef" data-colour="#50F" type="checkbox"><strong><u>Key</u></strong> Source Reefs</label>
+          </div>
+        </section>
+      </div>
+
+      <div class="filter-colours-key">
+        <header class="header"><label for="toggle-key">Data Filter and Colour Key</label> <button class="reset-colours">Reset colours</button></header>
+        <input id="toggle-key" type="checkbox" class="hidden toggle-next" checked>
+        <div class="filter-colours"></div>
+      </div>
+    </div>
+  </aside>
+
+  <a class="logo" href="https://citizensgbr.org">
+    <img src="citizensgbr.svg">
+  </a>
+</div>
+<script async defer type="module" src="app/index.js"></script>
+</body>
