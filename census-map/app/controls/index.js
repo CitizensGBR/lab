@@ -9,7 +9,11 @@ export const init = () => {
   props.activeControls = {};
 
   let controlMode;
-  if (hash.props.admin && hash.props.admin.active) {
+  /* REMOVE */
+  if (location.pathname.indexOf('/v2') >= 0) {
+    console.log('AUTO ADMIN: PLEASE REMOVE')
+    $el.nav.dataset.control = controlMode = 'admin';
+  } else if (hash.props.admin && hash.props.admin.active) {
     $el.nav.dataset.control = controlMode = 'admin';
   } else if (hash.props.controls && hash.props.controls.active) {
     $el.nav.dataset.control = controlMode = 'control';

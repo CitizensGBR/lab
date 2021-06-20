@@ -101,7 +101,6 @@ load(sources).then((data) => {
 
   props.data.features.forEach((feature) => {
     if (!data.grc2020.find(grcID => grcID === feature.id)) return;
-    console.log(feature.properties.name);
     feature.properties.survey = ['grc2020'].concat(feature.survey || []);    
   });
 
