@@ -63,6 +63,21 @@
           <span class="label"><strong>Overall importance score</strong> <abbr tabindex="0" class="c-info"><em>Final metric applied (0-2) without prioritisation for individual sectors. While this predicts the best of the GBR overall, it may neglect reefs that are locally important but not significant at whole-of-reef scale.</em></abbr> <output></output><output></output></span>
           <div class="filter-range" data-key="s" data-min="0" data-max="2" data-type="score"></div>
 
+          <h4 class="label">Degree Heating Weeks <abbr tabindex="0" class="c-info"><em>Source: NOAA Coral Reef Watch (5km) / Collated by Yves-Marie Bozec (UQ)</em></abbr></h4>
+
+          <span class="label"><strong>2016-2020 Max</strong> <output></output><output></output></span>
+          <div class="filter-range" data-key="dhw" data-type="dhw_max" data-min="0" data-max="15"></div>
+          
+          <span class="label"><strong>2020</strong> <output></output><output></output></span>
+          <div class="filter-range" data-key="dhw20" data-type="dhw_2020" data-min="0" data-max="15"></div>
+
+          <span class="label"><strong>2017</strong> <output></output><output></output></span>
+          <div class="filter-range" data-key="dhw17" data-type="dhw_2017" data-min="0" data-max="15"></div>
+
+          <span class="label"><strong>2016</strong> <output></output><output></output></span>
+          <div class="filter-range" data-key="dhw16" data-type="dhw_2016" data-min="0" data-max="15"></div>
+
+
           <h4 class="label">Other metrics</h4>
 
           <span class="label"><strong>AIMS sector</strong> <output></output><output></output></span>
@@ -71,12 +86,25 @@
           <span class="label"><strong>Predicted coral cover</strong> <abbr tabindex="0" class="c-info"><em>Source: ReefMod (UQ) Yves-Marie Bozec & Pete Mumby</em></abbr> <output></output><output></output></span>
           <div class="filter-range" data-key="p" data-type="coral_cover_2020" data-format="p"></div>
 
-          <span class="label"><strong>Degree heating weeks 2020</strong> <abbr tabindex="0" class="c-info"><em>Source: ReefMod (UQ) Yves-Marie Bozec & Pete Mumby</em></abbr> <output></output><output></output></span>
-          <div class="filter-range" data-key="dhw" data-type="DHW2020" data-min="0" data-max="15"></div>
         </section>
 
         <section id="filter-toggles">
+          <div class="filter-toggles--other">
+            <h3>GRC Identified Reefs</h3>
+            
+            <label title="Top 20% + DHW≤4 OR DHW≥8"><input class="filter-item" data-type="attr" data-key="PrR" data-value="dhw_priority" data-title="Top 20% + DHW≤4 OR DHW≥8" data-colour="#F5F" type="checkbox"><strong><u>Pr</u></strong>iority <u>R</u>eefs (Max DHW)</label>
+
+            <label title="Top 20% + DHW≤4 OR DHW≥8"><input class="filter-item" data-type="attr" data-key="PrRA" data-value="dhw_priority_avg" data-title="Top 20% + DHW≤4 OR DHW≥8" data-colour="#F5F" type="checkbox"><strong><u>Pr</u></strong>iority <u>R</u>eefs (<u>A</u>vg DHW)</label>
+
+            <label><input class="filter-item" data-type="survey" data-key="SuR" data-title="Surveyed" data-value="grc2020" data-colour="#7F7" type="checkbox"><strong><u>Su</u></strong>rveyed <u>R</u>eefs (GRC 2020)</label>
+          </div>
+
+
           <h3>GBRMPA identified reefs</h3>
+
+          <h4>COTS</h4>
+          <label><input class="filter-item" data-type="attr" data-value="cotstarget" data-key="COT" data-title="COTS targeted reef" data-colour="#FF0" type="checkbox"><strong><u>CO</u></strong>TS <u>T</u>argeted</label>
+          <label><input class="filter-item" data-type="attr" data-value="cotspriority" data-key="COP" data-title="COTS prioritised reef" data-colour="#FAF" type="checkbox"><strong><u>CO</u></strong>TS <u>P</u>rioritised</label>
 
           <div class="filter-toggles--resilience">
             <h4>Resilience</h4>
@@ -90,12 +118,6 @@
           <label><input class="filter-item" data-type="survey" data-key="Un" data-title="Unsurveyed" data-colour="#CAC" type="checkbox"><strong><u>Un</u></strong>surveyed (targeted)</label>
           <label><input class="filter-item" data-type="survey" data-key="Mo" data-title="Monitored" data-value="aims|mmp|bzgz" data-colour="#0AC" type="checkbox"><strong><u>Mo</u></strong>nitored (LTMP, MMP, BZGZ)</label>
           <label><input class="filter-item" data-type="survey" data-key="Su" data-title="Surveyed" data-value="cb|eotr" data-colour="#AC0" type="checkbox"><strong><u>Su</u></strong>rveyed (Bleaching Response, EOTR)</label>
-          <label><input class="filter-item" data-type="survey" data-key="Ce" data-title="Surveyed" data-value="grc2020" data-colour="#F07" type="checkbox"><strong><u>Ce</u></strong>nsus 2020 (Great Reef Census)</label>
-
-          <div class="filter-toggles--other">
-            <h3>Other identified reefs</h3>
-            <label><input class="filter-item" data-type="attr" data-key="Key" data-value="keysourcereef" data-title="Key Source Reef" data-colour="#50F" type="checkbox"><strong><u>Key</u></strong> Source Reefs</label>
-          </div>
         </section>
       </div>
 

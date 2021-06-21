@@ -1,10 +1,16 @@
 export const data = {
   gbrmpa: 'data/gbrmpa-reefs.json',
-  keysourcereefs: 'data/source-reefs.json',
-  priorityreefs: 'data/priority-reefs.csv',
-  gbr2020: 'data/gbr2020.csv',
-  grc2020: 'data/grc2020.json',
   features: 'data/GBR-Features-points.pbf',
+  keysourcereefs: 'data/source-reefs.json',
+  priorityreefs: 'data/priority-reefs-2020.csv',
+  /* V2 */
+  grc2020: 'data/v2/grc2020.json',
+  priorityreefsv2: 'data/v2/priority-reefs-final-2020.csv',
+  dhw: 'data/v2/dhw.csv',
+  cotspriority: 'data/v2/cots-priority-2021.json',
+  cotstarget: 'data/v2/cots-target-2021.json',
+  /* OLD - can remove */
+  gbr2020: 'data/v2/gbr2020.csv',
 };
 
 export const mapbox = {

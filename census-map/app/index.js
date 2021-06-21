@@ -8,6 +8,7 @@ import { data as sources } from './config.js';
 
 load(sources).then((data) => {
   props.data = data;
+  props.v2 = location.pathname.indexOf('/v2');
 
   const meta = props.data.gbrmpa.meta;
   const gidMap = {};
@@ -31,22 +32,80 @@ load(sources).then((data) => {
   });
 
   const missing = [];
-  props.data.priorityreefs.forEach((item) => {
-    if (!gidMap[item.gid]) {
-      missing.push(item.gid);
-      gidMap[item.gid] = {};
-    }
-    gidMap[item.gid].priorityreef = true;
-    Object.assign(gidMap[item.gid], item);
-  });
 
-  props.data.keysourcereefs.forEach((gid) => {
+  if (props.v2) {
+    const importance_10_sector = [];
+    data.priorityreefsv2
+    .sort((a, b) => a.importance_sector - b.importance_sector)
+    .forEach((item) => {
+      if (!gidMap[item.gid]) {
+        missing.push(item.gid);
+        gidMap[item.gid] = {};
+      }
+      importance_10_sector[item.aims_sector - 1] = (importance_10_sector[item.aims_sector - 1] || []).concat(gidMap[item.gid]);
+      gidMap[item.gid].priorityreef = true;
+      Object.assign(gidMap[item.gid], item);
+    });
+
+    // update sector10 scores
+    importance_10_sector.forEach((sector, i) => sector.forEach((item, ii) => {
+      item.importance_10_sector = Math.max(1, Math.ceil(10 * ii / sector.length));
+    }));
+  } else {
+    data.priorityreefs.forEach((item) => {
+      if (!gidMap[item.gid]) {
+        missing.push(item.gid);
+        gidMap[item.gid] = {};
+      }
+      gidMap[item.gid].priorityreef = true;
+      Object.assign(gidMap[item.gid], item);
+    });
+  }
+
+  data.keysourcereefs.forEach((gid) => {
     if (!gidMap[gid]) gidMap[gid] = {};
     gidMap[gid].keysourcereef = true;
   });
 
+  data.cotspriority.forEach((gid) => {
+    if (!gidMap[gid]) gidMap[gid] = {};
+    gidMap[gid].cotspriority = true;
+  });
+
+  data.cotstarget.forEach((gid) => {
+    if (!gidMap[gid]) gidMap[gid] = {};
+    gidMap[gid].cotstarget = true;
+  });
+
+  let dhw_i = 0
+  let dhw_i8 = 0
+  data.dhw.forEach((dhw) => {
+    if (!gidMap[dhw.gid]) gidMap[dhw.gid] = {};
+
+    const item = gidMap[dhw.gid];
+
+    item.dhw_2016 = dhw.year_2016;
+    item.dhw_2017 = dhw.year_2017;
+    item.dhw_2020 = dhw.year_2020;
+    item.dhw_max = Math.max(dhw.year_2016, dhw.year_2017, dhw.year_2020);
+    item.dhw_avg = (dhw.year_2016 + dhw.year_2017 + dhw.year_2020) / 3;
+
+    // if reef value (per sector) is in top 20% && DHW <= 4
+    // OR DHW >= 8
+    if (item.dhw_max >= 8 || (item.importance_10_sector >= 9 && item.dhw_max <= 4)) {
+      item.dhw_priority = true;
+    }
+
+    if (item.dhw_avg >= 8 || (item.importance_10_sector >= 9 && item.dhw_avg <= 4)) {
+      ++dhw_i;
+      if (item.dhw_max >= 8) ++dhw_i8;
+      item.dhw_priority_avg = true;
+    }
+  });
+
   const adopt_closest_feature = [];
 
+  dhw_i = dhw_i8 = 0
   props.data.features.forEach((feature, index) => {
     if (!feature.properties.gid) console.log(feature.properties);
     feature.properties.search = [feature.properties.name, feature.properties.gid].filter(v => v).join(' ');
@@ -61,6 +120,8 @@ load(sources).then((data) => {
     if (!feature.properties.aims_sector || !feature.properties.mgmt) {
       adopt_closest_feature.push(feature);
     }
+
+    if (feature.properties.dhw_priority) ++dhw_i;
   });
 
   /***
